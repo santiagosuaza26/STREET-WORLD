@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param } from "@nestjs/common";
 import { OrderService } from "../../application/orders/order.service";
 
 @Controller("orders")
@@ -7,6 +7,10 @@ export class OrdersController {
 
   @Get(":id")
   async getOrder(@Param("id") id: string) {
-    return this.orderService.getOrder(id);
+    const order = await this.orderService.getOrder(id);
+    if (!order) {
+      throw new NotFoundException("Pedido no encontrado");
+    }
+    return order;
   }
 }

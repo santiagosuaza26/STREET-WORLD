@@ -1,10 +1,9 @@
-import Link from "next/link";
-import AddToCartButton from "../_components/AddToCartButton";
-import { products } from "../_data/products";
+import CatalogFilters from "../_components/CatalogFilters";
+import { getProducts } from "../_lib/products";
 
-const categories = Array.from(new Set(products.map((product) => product.category)));
-
-export default function CatalogPage() {
+export default async function CatalogPage() {
+  const products = await getProducts();
+  const categories = Array.from(new Set(products.map((product) => product.category)));
   return (
     <section className="section catalog" id="catalogo">
       <div className="container">
@@ -17,36 +16,7 @@ export default function CatalogPage() {
             Seleccion curada de piezas urbanas listas para moverse contigo.
           </p>
         </div>
-        <div className="chip-row">
-          {categories.map((category) => (
-            <span className="chip" key={category}>
-              {category}
-            </span>
-          ))}
-        </div>
-        <div className="grid catalog-grid">
-          {products.map((product) => (
-            <article className="card product-card" key={product.slug}>
-              <div className="tag">{product.tag}</div>
-              <p className="muted">{product.category}</p>
-              <h3>{product.name}</h3>
-              <p className="muted">{product.summary}</p>
-              <div className="product-footer">
-                <span className="price">{product.price}</span>
-                <div className="product-actions">
-                  <Link className="button-link ghost" href={`/catalogo/${product.slug}`}>
-                    Ver detalle
-                  </Link>
-                  <AddToCartButton
-                    product={product}
-                    label="Agregar"
-                    variant="primary"
-                  />
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+        <CatalogFilters products={products} categories={categories} />
       </div>
     </section>
   );

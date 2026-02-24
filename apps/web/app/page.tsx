@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { categories, featuredProducts, perks } from "./_data/catalog";
+import AddToCartButton from "./_components/AddToCartButton";
+import NewsletterForm from "./_components/NewsletterForm";
+import { categories, perks } from "./_data/catalog";
+import { getProducts } from "./_lib/products";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const products = await getProducts();
+  const featuredProducts = products.slice(0, 3);
   return (
     <>
       <section className="hero">
@@ -103,10 +108,10 @@ export default function HomePage() {
           <div className="grid products">
             {featuredProducts.map((product) => (
               <article key={product.name} className="card product">
-                <div className="tag">{product.tag}</div>
+                {product.tag ? <div className="tag">{product.tag}</div> : null}
                 <h3>{product.name}</h3>
                 <p className="price">{product.price}</p>
-                <button className="primary">Agregar al carrito</button>
+                <AddToCartButton product={product} label="Agregar" />
               </article>
             ))}
           </div>
@@ -121,12 +126,7 @@ export default function HomePage() {
               Acceso prioritario a drops, descuentos y eventos locales.
             </p>
           </div>
-          <form className="newsletter-form">
-            <input type="email" placeholder="Tu correo" />
-            <button className="primary" type="submit">
-              Suscribirme
-            </button>
-          </form>
+          <NewsletterForm />
         </div>
       </section>
     </>

@@ -9,13 +9,15 @@ type AddToCartButtonProps = {
   label?: string;
   variant?: "primary" | "ghost";
   openOnAdd?: boolean;
+  quantity?: number;
 };
 
 export default function AddToCartButton({
   product,
   label = "Agregar al carrito",
   variant = "primary",
-  openOnAdd = false
+  openOnAdd = false,
+  quantity = 1
 }: AddToCartButtonProps) {
   const { addItem, openCart } = useCart();
 
@@ -27,7 +29,7 @@ export default function AddToCartButton({
         price: parsePriceToNumber(product.price),
         priceLabel: product.price
       },
-      1
+      quantity
     );
     if (openOnAdd) {
       openCart();

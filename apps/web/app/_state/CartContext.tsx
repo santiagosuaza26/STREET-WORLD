@@ -28,10 +28,15 @@ type CartContextValue = {
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
+  shipping: number;
+  total: number;
+  freeShippingThreshold: number;
 };
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 const STORAGE_KEY = "street-world-cart";
+const FREE_SHIPPING_THRESHOLD = 220000;
+const SHIPPING_BASE = 12000;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -106,6 +111,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [items]
   );
 
+  const shipping = useMemo(() => {
+    if (subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD) {
+      return 0;
+    }
+    return SHIPPING_BASE;
+  }, [subtotal]);
+
+  const total = useMemo(() => subtotal + shipping, [subtotal, shipping]);
+
   const value = {
     items,
     isOpen,
@@ -116,7 +130,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     closeCart,
     clearCart,
     totalItems,
-    subtotal
+    subtotal,
+    shipping,
+    total,
+    freeShippingThreshold: FREE_SHIPPING_THRESHOLD
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

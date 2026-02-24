@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import {
   CheckoutSession,
   PAYMENT_GATEWAY,
@@ -18,6 +18,7 @@ export class PaymentService {
   ) {}
 
   async createCheckout(input: CheckoutRequest): Promise<CheckoutResult> {
+    this.validateCheckoutRequest(input);
     const order = await this.orderService.createOrder({
       customerEmail: input.customerEmail,
       currency: input.currency,
@@ -43,5 +44,32 @@ export class PaymentService {
       event.status
     );
     return { ok: true, order };
+  }
+
+  private validateCheckoutRequest(input: CheckoutRequest) {
+    if (!input || input.currency !== "COP") {
+      throw new BadRequestException("Moneda invalida");
+    }
+
+    const email = input.customerEmail?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException("Correo invalido");
+    }
+
+    if (!Array.isArray(input.items) || input.items.length === 0) {
+      throw new BadRequestException("El carrito no puede estar vacio");
+    }
+
+    for (const item of input.items) {
+      if (!item.slug || !item.name) {
+        throw new BadRequestException("Item invalido");
+      }
+      if (!Number.isFinite(item.price) || item.price <= 0) {
+        throw new BadRequestException("Precio invalido");
+      }
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+        throw new BadRequestException("Cantidad invalida");
+      }
+    }
   }
 }

@@ -19,17 +19,17 @@ export default function Footer() {
         <div>
           <h4>Ayuda</h4>
           <ul>
-            <li><a href="#">Envios y devoluciones</a></li>
-            <li><a href="#">Guia de tallas</a></li>
-            <li><a href="#">Soporte</a></li>
+            <li><a href="/envios">Envios y devoluciones</a></li>
+            <li><a href="/tallas">Guia de tallas</a></li>
+            <li><a href="/soporte">Soporte</a></li>
           </ul>
         </div>
         <div>
           <h4>Legal</h4>
           <ul>
-            <li><a href="#">Privacidad</a></li>
-            <li><a href="#">Terminos</a></li>
-            <li><a href="#">Pagos</a></li>
+            <li><a href="/privacidad">Privacidad</a></li>
+            <li><a href="/terminos">Terminos</a></li>
+            <li><a href="/pagos">Pagos</a></li>
           </ul>
         </div>
       </div>
