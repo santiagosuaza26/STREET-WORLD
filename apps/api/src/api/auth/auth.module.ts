@@ -1,12 +1,15 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthService } from "../../application/auth/auth.service";
 import { USER_REPOSITORY } from "../../domain/users/user-repository";
-import { InMemoryUserRepository } from "../../infrastructure/users/in-memory-user.repository";
+import { UserEntity } from "../../infrastructure/database/entities";
+import { TypeOrmUserRepository } from "../../infrastructure/repositories/typeorm-user.repository";
 import { AuthController } from "./auth.controller";
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([UserEntity]),
     JwtModule.register({
       secret: process.env.JWT_SECRET ?? "dev-secret",
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? "7d" }
@@ -17,7 +20,7 @@ import { AuthController } from "./auth.controller";
     AuthService,
     {
       provide: USER_REPOSITORY,
-      useClass: InMemoryUserRepository
+      useClass: TypeOrmUserRepository
     }
   ]
 })

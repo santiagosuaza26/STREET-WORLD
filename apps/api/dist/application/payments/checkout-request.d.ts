@@ -7,5 +7,6 @@ export type CheckoutItemInput = {
 export type CheckoutRequest = {
     currency: "COP";
     customerEmail: string;
+    userId?: string;
     items: CheckoutItemInput[];
 };

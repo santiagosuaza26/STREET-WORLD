@@ -22,25 +22,65 @@ let PaymentService = class PaymentService {
         this.orderService = orderService;
     }
     async createCheckout(input) {
+        this.validateCheckoutRequest(input);
+        const orderItems = input.items.map(item => ({
+            productId: item.id || 'unknown',
+            productName: item.name || 'Unknown Product',
+            unitPrice: parseFloat(item.price),
+            quantity: item.quantity,
+            subtotal: parseFloat(item.price) * item.quantity
+        }));
         const order = await this.orderService.createOrder({
-            customerEmail: input.customerEmail,
-            currency: input.currency,
-            items: input.items
+            userId: input.userId ?? 'guest',
+            items: orderItems
         });
         const session = await this.gateway.createCheckoutSession({
-            currency: order.currency,
-            amount: order.totalAmount,
+            currency: "COP",
+            amount: order.total,
             reference: order.id,
-            customerEmail: order.customerEmail
+            customerEmail: input.customerEmail
         });
+        if (session.provider === "mock") {
+            await this.orderService.updateStatus(order.id, "PAID");
+        }
         return {
             ...session,
             orderId: order.id
         };
     }
     async handleWebhook(event) {
-        const order = await this.orderService.updateStatus(event.reference, event.status);
+        const statusMap = {
+            "APPROVED": "PAID",
+            "DECLINED": "CANCELLED",
+            "ERROR": "CANCELLED",
+            "PENDING": "PENDING"
+        };
+        const orderStatus = statusMap[event.status] || "PENDING";
+        const order = await this.orderService.updateStatus(event.reference, orderStatus);
         return { ok: true, order };
+    }
+    validateCheckoutRequest(input) {
+        if (!input || input.currency !== "COP") {
+            throw new common_1.BadRequestException("Moneda invalida");
+        }
+        const email = input.customerEmail?.trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            throw new common_1.BadRequestException("Correo invalido");
+        }
+        if (!Array.isArray(input.items) || input.items.length === 0) {
+            throw new common_1.BadRequestException("El carrito no puede estar vacio");
+        }
+        for (const item of input.items) {
+            if (!item.slug || !item.name) {
+                throw new common_1.BadRequestException("Item invalido");
+            }
+            if (!Number.isFinite(item.price) || item.price <= 0) {
+                throw new common_1.BadRequestException("Precio invalido");
+            }
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new common_1.BadRequestException("Cantidad invalida");
+            }
+        }
     }
 };
 exports.PaymentService = PaymentService;

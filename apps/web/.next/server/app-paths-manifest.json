@@ -1,7 +1,22 @@
 {
-  "/registro/page": "app/registro/page.js",
-  "/login/page": "app/login/page.js",
-  "/page": "app/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/catalogo/page": "app/catalogo/page.js",
-  "/checkout/page": "app/checkout/page.js"
+  "/beneficios/page": "app/beneficios/page.js",
+  "/checkout/estado/page": "app/checkout/estado/page.js",
+  "/checkout/page": "app/checkout/page.js",
+  "/cuenta/page": "app/cuenta/page.js",
+  "/contacto/page": "app/contacto/page.js",
+  "/page": "app/page.js",
+  "/envios/page": "app/envios/page.js",
+  "/pagos/page": "app/pagos/page.js",
+  "/login/page": "app/login/page.js",
+  "/registro/page": "app/registro/page.js",
+  "/privacidad/page": "app/privacidad/page.js",
+  "/robots.txt/route": "app/robots.txt/route.js",
+  "/tallas/page": "app/tallas/page.js",
+  "/soporte/page": "app/soporte/page.js",
+  "/sale/page": "app/sale/page.js",
+  "/terminos/page": "app/terminos/page.js",
+  "/sitemap.xml/route": "app/sitemap.xml/route.js",
+  "/catalogo/[slug]/page": "app/catalogo/[slug]/page.js"
 }

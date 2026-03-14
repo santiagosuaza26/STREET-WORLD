@@ -1,27 +1,18 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Post, ValidationPipe } from "@nestjs/common";
 import { AuthService } from "../../application/auth/auth.service";
-
-type RegisterRequest = {
-  email: string;
-  password: string;
-};
-
-type LoginRequest = {
-  email: string;
-  password: string;
-};
+import { RegisterDto, LoginDto, AuthResponseDto } from "./dtos";
 
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post("register")
-  register(@Body() body: RegisterRequest) {
+  async register(@Body(ValidationPipe) body: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(body);
   }
 
   @Post("login")
-  login(@Body() body: LoginRequest) {
+  async login(@Body(ValidationPipe) body: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(body);
   }
 }

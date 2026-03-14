@@ -19,9 +19,26 @@ let InMemoryOrderRepository = class InMemoryOrderRepository {
     async findById(id) {
         return this.store.get(id) ?? null;
     }
-    async update(order) {
-        this.store.set(order.id, order);
-        return order;
+    async findByUserId(userId) {
+        const results = [];
+        for (const order of this.store.values()) {
+            if (order.userId === userId) {
+                results.push(order);
+            }
+        }
+        return results;
+    }
+    async findAll() {
+        return Array.from(this.store.values());
+    }
+    async update(id, order) {
+        const existing = this.store.get(id);
+        if (!existing) {
+            return null;
+        }
+        const updated = { ...existing, ...order };
+        this.store.set(id, updated);
+        return updated;
     }
 };
 exports.InMemoryOrderRepository = InMemoryOrderRepository;

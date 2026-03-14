@@ -9,15 +9,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ApiModule = void 0;
 const common_1 = require("@nestjs/common");
 const auth_module_1 = require("./auth/auth.module");
+const contact_module_1 = require("./contact/contact.module");
 const health_controller_1 = require("./controllers/health.controller");
 const orders_module_1 = require("./orders/orders.module");
 const payments_module_1 = require("./payments/payments.module");
+const products_module_1 = require("./products/products.module");
+const users_module_1 = require("./users/users.module");
 let ApiModule = class ApiModule {
 };
 exports.ApiModule = ApiModule;
 exports.ApiModule = ApiModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule, orders_module_1.OrdersModule, payments_module_1.PaymentsModule],
+        imports: [auth_module_1.AuthModule, contact_module_1.ContactModule, orders_module_1.OrdersModule, payments_module_1.PaymentsModule, products_module_1.ProductsModule, users_module_1.UsersModule],
         controllers: [health_controller_1.HealthController]
     })
 ], ApiModule);

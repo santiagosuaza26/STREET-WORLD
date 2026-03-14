@@ -1,28 +1,8 @@
 import { AuthService } from "../../application/auth/auth.service";
-type RegisterRequest = {
-    email: string;
-    password: string;
-};
-type LoginRequest = {
-    email: string;
-    password: string;
-};
+import { RegisterDto, LoginDto, AuthResponseDto } from "./dtos";
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
-    register(body: RegisterRequest): Promise<{
-        accessToken: string;
-        user: {
-            id: string;
-            email: string;
-        };
-    }>;
-    login(body: LoginRequest): Promise<{
-        accessToken: string;
-        user: {
-            id: string;
-            email: string;
-        };
-    }>;
+    register(body: RegisterDto): Promise<AuthResponseDto>;
+    login(body: LoginDto): Promise<AuthResponseDto>;
 }
-export {};

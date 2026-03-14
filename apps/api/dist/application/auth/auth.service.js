@@ -50,11 +50,14 @@ let AuthService = class AuthService {
         return this.createToken(user);
     }
     async createToken(user) {
+        const expiresIn = process.env.JWT_EXPIRES_IN ?? "7d";
         const payload = { sub: user.id, email: user.email };
-        const accessToken = await this.jwtService.signAsync(payload);
+        const token = await this.jwtService.signAsync(payload);
         return {
-            accessToken,
-            user: { id: user.id, email: user.email }
+            id: user.id,
+            email: user.email,
+            token,
+            expiresIn
         };
     }
 };

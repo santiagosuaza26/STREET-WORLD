@@ -1,6 +1,5 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import Link from "next/link";
 import { formatPrice } from "../_lib/price";
 import { useCart } from "../_state/CartContext";
@@ -13,33 +12,20 @@ export default function CartDrawer() {
     updateQuantity,
     removeItem,
     clearCart,
-    subtotal,
-    totalItems,
-    freeShippingThreshold
+    subtotal
   } = useCart();
-
-  const handleOverlayClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      closeCart();
-    }
-  };
 
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div
-      className="cart-overlay"
-      role="dialog"
-      aria-modal="true"
-      onClick={handleOverlayClick}
-    >
+    <div className="cart-overlay" role="dialog" aria-modal="true">
       <div className="cart-drawer">
         <div className="cart-header">
           <div>
             <p className="eyebrow">Carrito</p>
-            <h3>Tu seleccion ({totalItems})</h3>
+            <h3>Tu seleccion</h3>
           </div>
           <button className="ghost" onClick={closeCart} type="button">
             Cerrar
@@ -56,20 +42,18 @@ export default function CartDrawer() {
           <>
             <div className="cart-items">
               {items.map((item) => (
-                <div className="cart-item" key={item.slug}>
-                  <div className="cart-item-main">
+                <div className="cart-item" key={`${item.slug}-${item.size}`}>
+                  <div>
                     <h4>{item.name}</h4>
-                    <div className="cart-item-meta">
-                      <span className="muted">{item.priceLabel}</span>
-                      <span className="cart-line-total">
-                        {formatPrice(item.price * item.quantity)}
-                      </span>
-                    </div>
+                    <p className="muted">{item.priceLabel}</p>
+                    {item.size && item.size !== "Unica" && (
+                      <p className="size-label">Talla: {item.size}</p>
+                    )}
                   </div>
                   <div className="cart-qty">
                     <button
                       className="ghost"
-                      onClick={() => updateQuantity(item.slug, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.slug, item.size, item.quantity - 1)}
                       type="button"
                     >
                       -
@@ -77,14 +61,14 @@ export default function CartDrawer() {
                     <span>{item.quantity}</span>
                     <button
                       className="ghost"
-                      onClick={() => updateQuantity(item.slug, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.slug, item.size, item.quantity + 1)}
                       type="button"
                     >
                       +
                     </button>
                     <button
                       className="ghost"
-                      onClick={() => removeItem(item.slug)}
+                      onClick={() => removeItem(item.slug, item.size)}
                       type="button"
                     >
                       Quitar
@@ -98,17 +82,6 @@ export default function CartDrawer() {
                 <span>Subtotal</span>
                 <strong>{formatPrice(subtotal)}</strong>
               </div>
-              <div className="cart-summary muted">
-                <span>Envio estimado</span>
-                <strong>Calculado en checkout</strong>
-              </div>
-              <div className="cart-total">
-                <span>Total</span>
-                <strong>{formatPrice(subtotal)}</strong>
-              </div>
-              <p className="muted small cart-note">
-                Envio gratis desde {formatPrice(freeShippingThreshold)}.
-              </p>
               <div className="cart-actions">
                 <button className="ghost" onClick={clearCart} type="button">
                   Vaciar carrito

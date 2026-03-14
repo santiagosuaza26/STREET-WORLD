@@ -19,18 +19,32 @@ export class PaymentService {
 
   async createCheckout(input: CheckoutRequest): Promise<CheckoutResult> {
     this.validateCheckoutRequest(input);
+    
+    // Map CheckoutRequest items to OrderItem format
+    const orderItems = input.items.map(item => ({
+      productId: (item as any).id || 'unknown',
+      productName: (item as any).name || 'Unknown Product',
+      unitPrice: parseFloat(item.price as any),
+      quantity: item.quantity,
+      subtotal: parseFloat(item.price as any) * item.quantity
+    }));
+
     const order = await this.orderService.createOrder({
-      customerEmail: input.customerEmail,
-      currency: input.currency,
-      items: input.items
+      userId: input.userId ?? 'guest',
+      items: orderItems
     });
 
     const session: CheckoutSession = await this.gateway.createCheckoutSession({
-      currency: order.currency,
-      amount: order.totalAmount,
+      currency: "COP",
+      amount: order.total,
       reference: order.id,
-      customerEmail: order.customerEmail
+      customerEmail: input.customerEmail
     });
+
+    // In mock mode we auto-approve to keep the full checkout flow working without provider keys.
+    if (session.provider === "mock") {
+      await this.orderService.updateStatus(order.id, "PAID");
+    }
 
     return {
       ...session,
@@ -39,9 +53,19 @@ export class PaymentService {
   }
 
   async handleWebhook(event: PaymentWebhookEvent) {
+    // Map payment status to order status
+    const statusMap: { [key: string]: any } = {
+      "APPROVED": "PAID",
+      "DECLINED": "CANCELLED",
+      "ERROR": "CANCELLED",
+      "PENDING": "PENDING"
+    };
+
+    const orderStatus = statusMap[event.status] || "PENDING";
+    
     const order = await this.orderService.updateStatus(
       event.reference,
-      event.status
+      orderStatus
     );
     return { ok: true, order };
   }

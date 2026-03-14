@@ -12,4 +12,5 @@ export declare class PaymentService {
         ok: boolean;
         order: import("../../domain/orders/order").Order | null;
     }>;
+    private validateCheckoutRequest;
 }

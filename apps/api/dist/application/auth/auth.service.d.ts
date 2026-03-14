@@ -8,24 +8,18 @@ type LoginInput = {
     email: string;
     password: string;
 };
+type AuthResponse = {
+    id: string;
+    email: string;
+    token: string;
+    expiresIn: string;
+};
 export declare class AuthService {
     private readonly users;
     private readonly jwtService;
     constructor(users: UserRepository, jwtService: JwtService);
-    register(input: RegisterInput): Promise<{
-        accessToken: string;
-        user: {
-            id: string;
-            email: string;
-        };
-    }>;
-    login(input: LoginInput): Promise<{
-        accessToken: string;
-        user: {
-            id: string;
-            email: string;
-        };
-    }>;
+    register(input: RegisterInput): Promise<AuthResponse>;
+    login(input: LoginInput): Promise<AuthResponse>;
     private createToken;
 }
 export {};

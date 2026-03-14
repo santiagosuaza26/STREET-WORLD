@@ -21,17 +21,37 @@ let OrderService = class OrderService {
         this.repository = repository;
     }
     async createOrder(input) {
-        if (input.items.length === 0) {
-            throw new Error("El carrito no puede estar vacio");
+        if (!input.userId) {
+            throw new common_1.BadRequestException("Usuario requerido");
         }
-        const totalAmount = input.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        if (input.items.length === 0) {
+            throw new common_1.BadRequestException("El carrito no puede estar vacio");
+        }
+        for (const item of input.items) {
+            if (!item.productId || !item.productName) {
+                throw new common_1.BadRequestException("Item invalido");
+            }
+            if (!Number.isFinite(item.unitPrice) || item.unitPrice <= 0) {
+                throw new common_1.BadRequestException("Precio invalido");
+            }
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                throw new common_1.BadRequestException("Cantidad invalida");
+            }
+            if (!Number.isFinite(item.subtotal) || item.subtotal <= 0) {
+                throw new common_1.BadRequestException("Subtotal invalido");
+            }
+        }
+        const total = input.items.reduce((sum, item) => sum + item.subtotal, 0);
+        if (total <= 0) {
+            throw new common_1.BadRequestException("Total invalido");
+        }
         const order = {
             id: (0, crypto_1.randomUUID)(),
-            customerEmail: input.customerEmail,
-            currency: input.currency,
+            userId: input.userId,
             items: input.items,
-            totalAmount,
-            status: "pending",
+            total,
+            status: "PENDING",
+            notes: input.notes,
             createdAt: new Date().toISOString()
         };
         return this.repository.create(order);
@@ -39,14 +59,18 @@ let OrderService = class OrderService {
     async getOrder(id) {
         return this.repository.findById(id);
     }
+    async getUserOrders(userId) {
+        return this.repository.findByUserId(userId);
+    }
+    async getAllOrders() {
+        return this.repository.findAll();
+    }
     async updateStatus(id, status) {
         const order = await this.repository.findById(id);
         if (!order) {
-            return null;
+            throw new common_1.BadRequestException("Orden no encontrada");
         }
-        const updated = { ...order, status };
-        await this.repository.update(updated);
-        return updated;
+        return this.repository.update(id, { status });
     }
 };
 exports.OrderService = OrderService;

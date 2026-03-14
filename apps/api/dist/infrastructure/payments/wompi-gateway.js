@@ -10,9 +10,16 @@ exports.WompiGateway = void 0;
 const common_1 = require("@nestjs/common");
 let WompiGateway = class WompiGateway {
     async createCheckoutSession(input) {
+        const template = process.env.PAYMENTS_CHECKOUT_URL_TEMPLATE ??
+            "http://localhost:3000/checkout/estado?orderId={reference}";
+        const checkoutUrl = template
+            .replace("{reference}", encodeURIComponent(input.reference))
+            .replace("{email}", encodeURIComponent(input.customerEmail))
+            .replace("{amount}", encodeURIComponent(String(input.amount)))
+            .replace("{currency}", encodeURIComponent(input.currency));
         return {
             provider: "wompi",
-            checkoutUrl: "https://checkout.wompi.co/placeholder",
+            checkoutUrl,
             reference: input.reference
         };
     }

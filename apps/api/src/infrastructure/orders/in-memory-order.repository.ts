@@ -15,8 +15,27 @@ export class InMemoryOrderRepository implements OrderRepository {
     return this.store.get(id) ?? null;
   }
 
-  async update(order: Order): Promise<Order> {
-    this.store.set(order.id, order);
-    return order;
+  async findByUserId(userId: string): Promise<Order[]> {
+    const results: Order[] = [];
+    for (const order of this.store.values()) {
+      if (order.userId === userId) {
+        results.push(order);
+      }
+    }
+    return results;
+  }
+
+  async findAll(): Promise<Order[]> {
+    return Array.from(this.store.values());
+  }
+
+  async update(id: string, order: Partial<Order>): Promise<Order | null> {
+    const existing = this.store.get(id);
+    if (!existing) {
+      return null;
+    }
+    const updated = { ...existing, ...order };
+    this.store.set(id, updated);
+    return updated;
   }
 }

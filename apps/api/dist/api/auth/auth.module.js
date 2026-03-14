@@ -9,9 +9,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
+const typeorm_1 = require("@nestjs/typeorm");
 const auth_service_1 = require("../../application/auth/auth.service");
 const user_repository_1 = require("../../domain/users/user-repository");
-const in_memory_user_repository_1 = require("../../infrastructure/users/in-memory-user.repository");
+const entities_1 = require("../../infrastructure/database/entities");
+const typeorm_user_repository_1 = require("../../infrastructure/repositories/typeorm-user.repository");
 const auth_controller_1 = require("./auth.controller");
 let AuthModule = class AuthModule {
 };
@@ -19,6 +21,7 @@ exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            typeorm_1.TypeOrmModule.forFeature([entities_1.UserEntity]),
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET ?? "dev-secret",
                 signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? "7d" }
@@ -29,7 +32,7 @@ exports.AuthModule = AuthModule = __decorate([
             auth_service_1.AuthService,
             {
                 provide: user_repository_1.USER_REPOSITORY,
-                useClass: in_memory_user_repository_1.InMemoryUserRepository
+                useClass: typeorm_user_repository_1.TypeOrmUserRepository
             }
         ]
     })

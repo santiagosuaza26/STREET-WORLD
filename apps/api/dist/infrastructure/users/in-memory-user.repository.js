@@ -24,6 +24,22 @@ let InMemoryUserRepository = class InMemoryUserRepository {
     async findById(id) {
         return this.usersById.get(id) ?? null;
     }
+    async update(id, user) {
+        const existing = this.usersById.get(id);
+        if (!existing) {
+            return null;
+        }
+        const updated = {
+            ...existing,
+            ...user,
+            id: existing.id,
+            email: existing.email,
+            updatedAt: new Date().toISOString(),
+        };
+        this.usersById.set(id, updated);
+        this.usersByEmail.set(updated.email, updated);
+        return updated;
+    }
 };
 exports.InMemoryUserRepository = InMemoryUserRepository;
 exports.InMemoryUserRepository = InMemoryUserRepository = __decorate([

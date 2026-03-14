@@ -4,92 +4,101 @@ import { ProductRepository } from "../../domain/products/product-repository";
 
 const PRODUCTS: Product[] = [
   {
-    slug: "hoodie-andes",
+    id: "1",
     name: "Hoodie Andes",
-    price: "$189.000",
+    description: "Hoodie disenado para clima frio, con costuras reforzadas y tacto suave. Ideal para capas urbanas.",
+    price: 189000,
+    image: "/images/hoodie-andes.jpg",
     category: "Hoodies",
-    tag: "Nuevo",
-    summary: "Felpa pesada, capucha amplia y ajuste premium.",
-    description:
-      "Hoodie disenado para clima frio, con costuras reforzadas y tacto suave. Ideal para capas urbanas.",
-    highlights: ["Felpa 400g", "Bolsillo canguro", "Cordones reforzados"],
-    sizes: ["S", "M", "L", "XL"],
-    stock: "Disponible"
+    stock: 50,
+    createdAt: new Date().toISOString()
   },
   {
-    slug: "cargo-distrito",
+    id: "2",
     name: "Cargo Distrito",
-    price: "$159.000",
+    description: "Pantalon cargo con silueta amplia, pensado para movimiento diario. Cintura flexible y caida limpia.",
+    price: 159000,
+    image: "/images/cargo-distrito.jpg",
     category: "Pantalones",
-    tag: "Top ventas",
-    summary: "Cargo de ajuste relajado y bolsillos utilitarios.",
-    description:
-      "Pantalon cargo con silueta amplia, pensado para movimiento diario. Cintura flexible y caida limpia.",
-    highlights: ["Cintura elastica", "Bolsillos laterales", "Tela resistente"],
-    sizes: ["28", "30", "32", "34"],
-    stock: "Disponible"
+    stock: 30,
+    createdAt: new Date().toISOString()
   },
   {
-    slug: "bucket-origen",
+    id: "3",
     name: "Bucket Origen",
-    price: "$89.000",
+    description: "Sombrero tipo bucket con ala suave y bordado interno. Perfecto para complementar looks urbanos.",
+    price: 89000,
+    image: "/images/bucket-origen.jpg",
     category: "Accesorios",
-    tag: "Edicion limitada",
-    summary: "Bucket ligero con bordado interno Street World.",
-    description:
-      "Sombrero tipo bucket con ala suave y bordado interno. Perfecto para complementar looks urbanos.",
-    highlights: ["Bordado interno", "Talla unica", "Algodon premium"],
-    sizes: ["Unica"],
-    stock: "Pocas unidades"
+    stock: 5,
+    createdAt: new Date().toISOString()
   },
   {
-    slug: "tee-avenida",
+    id: "4",
     name: "Tee Avenida",
-    price: "$79.000",
+    description: "Camiseta street con corte oversize y textura suave. Pensada para combinar con cargos y gorras.",
+    price: 79000,
+    image: "/images/tee-avenida.jpg",
     category: "Camisetas",
-    tag: "Basico",
-    summary: "Camiseta oversize con cuello alto y caida amplia.",
-    description:
-      "Camiseta street con corte oversize y textura suave. Pensada para combinar con cargos y gorras.",
-    highlights: ["Oversize", "Cuello reforzado", "Algodon peinado"],
-    sizes: ["S", "M", "L"],
-    stock: "Disponible"
+    stock: 100,
+    createdAt: new Date().toISOString()
   },
   {
-    slug: "chaqueta-barrio",
+    id: "5",
     name: "Chaqueta Barrio",
-    price: "$249.000",
+    description: "Chaqueta urbana con corte recto y detalles reflectivos para noches en movimiento. Forro respirable.",
+    price: 249000,
+    image: "/images/chaqueta-barrio.jpg",
     category: "Chaquetas",
-    tag: "Nuevo",
-    summary: "Chaqueta ligera con forro y detalles reflectivos.",
-    description:
-      "Chaqueta urbana con corte recto y detalles reflectivos para noches en movimiento. Forro respirable.",
-    highlights: ["Detalles reflectivos", "Forro respirable", "Cierre metalico"],
-    sizes: ["M", "L", "XL"],
-    stock: "Disponible"
+    stock: 20,
+    createdAt: new Date().toISOString()
   },
   {
-    slug: "gorra-summit",
+    id: "6",
     name: "Gorra Summit",
-    price: "$59.000",
+    description: "Gorra con paneles rigidos y bordado frontal. Ajuste trasero para comodidad diaria.",
+    price: 59000,
+    image: "/images/gorra-summit.jpg",
     category: "Accesorios",
-    tag: "Nuevo",
-    summary: "Gorra estructurada con visera curva.",
-    description:
-      "Gorra con paneles rigidos y bordado frontal. Ajuste trasero para comodidad diaria.",
-    highlights: ["Ajuste trasero", "Bordado frontal", "Visera curva"],
-    sizes: ["Unica"],
-    stock: "Disponible"
+    stock: 40,
+    createdAt: new Date().toISOString()
   }
 ];
 
 @Injectable()
 export class InMemoryProductRepository implements ProductRepository {
+  async create(product: Product): Promise<Product> {
+    PRODUCTS.push(product);
+    return product;
+  }
+
   async findAll(): Promise<Product[]> {
     return PRODUCTS;
   }
 
-  async findBySlug(slug: string): Promise<Product | null> {
-    return PRODUCTS.find((product) => product.slug === slug) ?? null;
+  async findById(id: string): Promise<Product | null> {
+    return PRODUCTS.find((product) => product.id === id) ?? null;
+  }
+
+  async findByCategory(category: string): Promise<Product[]> {
+    return PRODUCTS.filter((product) => product.category === category);
+  }
+
+  async update(id: string, product: Partial<Product>): Promise<Product | null> {
+    const index = PRODUCTS.findIndex((p) => p.id === id);
+    if (index === -1) {
+      return null;
+    }
+    PRODUCTS[index] = { ...PRODUCTS[index], ...product };
+    return PRODUCTS[index];
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const index = PRODUCTS.findIndex((p) => p.id === id);
+    if (index === -1) {
+      return false;
+    }
+    PRODUCTS.splice(index, 1);
+    return true;
   }
 }

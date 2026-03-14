@@ -1,3 +1,5 @@
+import type { Product } from "./products";
+
 export const categories = [
   {
     title: "Hoodies",
@@ -13,18 +15,21 @@ export const categories = [
   }
 ];
 
-export const featuredProducts = [
+export const featuredProducts: Partial<Product>[] = [
   {
+    slug: "hoodie-andes",
     name: "Hoodie Andes",
     price: "$189.000",
     tag: "Nuevo"
   },
   {
+    slug: "cargo-distrito",
     name: "Cargo Distrito",
     price: "$159.000",
     tag: "Top ventas"
   },
   {
+    slug: "bucket-origen",
     name: "Bucket Origen",
     price: "$89.000",
     tag: "Edicion limitada"

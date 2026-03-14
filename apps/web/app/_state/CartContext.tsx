@@ -7,6 +7,7 @@ export type CartItem = {
   name: string;
   price: number;
   priceLabel: string;
+  size: string;
   quantity: number;
 };
 
@@ -15,14 +16,15 @@ type AddItemInput = {
   name: string;
   price: number;
   priceLabel: string;
+  size: string;
 };
 
 type CartContextValue = {
   items: CartItem[];
   isOpen: boolean;
   addItem: (item: AddItemInput, quantity?: number) => void;
-  removeItem: (slug: string) => void;
-  updateQuantity: (slug: string, quantity: number) => void;
+  removeItem: (slug: string, size: string) => void;
+  updateQuantity: (slug: string, size: string, quantity: number) => void;
   openCart: () => void;
   closeCart: () => void;
   clearCart: () => void;
@@ -69,10 +71,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = (item: AddItemInput, quantity = 1) => {
     setItems((current) => {
-      const existing = current.find((entry) => entry.slug === item.slug);
+      const existing = current.find((entry) => entry.slug === item.slug && entry.size === item.size);
       if (existing) {
         return current.map((entry) =>
-          entry.slug === item.slug
+          entry.slug === item.slug && entry.size === item.size
             ? { ...entry, quantity: entry.quantity + quantity }
             : entry
         );
@@ -81,18 +83,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const removeItem = (slug: string) => {
-    setItems((current) => current.filter((entry) => entry.slug !== slug));
+  const removeItem = (slug: string, size: string) => {
+    setItems((current) => current.filter((entry) => !(entry.slug === slug && entry.size === size)));
   };
 
-  const updateQuantity = (slug: string, quantity: number) => {
+  const updateQuantity = (slug: string, size: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(slug);
+      removeItem(slug, size);
       return;
     }
     setItems((current) =>
       current.map((entry) =>
-        entry.slug === slug ? { ...entry, quantity } : entry
+        entry.slug === slug && entry.size === size ? { ...entry, quantity } : entry
       )
     );
   };

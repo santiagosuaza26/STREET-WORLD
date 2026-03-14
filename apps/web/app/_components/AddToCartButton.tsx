@@ -10,6 +10,8 @@ type AddToCartButtonProps = {
   variant?: "primary" | "ghost";
   openOnAdd?: boolean;
   quantity?: number;
+  size?: string;
+  onMissingSize?: () => void;
 };
 
 export default function AddToCartButton({
@@ -17,17 +19,26 @@ export default function AddToCartButton({
   label = "Agregar al carrito",
   variant = "primary",
   openOnAdd = false,
-  quantity = 1
+  quantity = 1,
+  size,
+  onMissingSize
 }: AddToCartButtonProps) {
   const { addItem, openCart } = useCart();
 
   const handleAdd = () => {
+    // Validar que se haya seleccionado una talla si el producto tiene tallas
+    if (product.sizes && product.sizes.length > 0 && !size) {
+      onMissingSize?.();
+      return;
+    }
+
     addItem(
       {
         slug: product.slug,
         name: product.name,
         price: parsePriceToNumber(product.price),
-        priceLabel: product.price
+        priceLabel: product.price,
+        size: size || "Unica"
       },
       quantity
     );

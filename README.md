@@ -24,5 +24,6 @@ Tienda online base en Espanol con arquitectura limpia y lista para escalar.
 - `apps/api` NestJS (backend)
 
 ## Notas
-- Pagos Colombia: se deja un gateway Wompi como placeholder.
+- Pagos sin llaves: usa `PAYMENTS_PROVIDER=mock` para flujo completo de compra en modo demo.
+- Pagos reales: cambia a `PAYMENTS_PROVIDER=wompi` y configura claves/URLs reales en `apps/api/.env`.
 - Sustituir claves reales en `.env` antes de pasar a produccion.

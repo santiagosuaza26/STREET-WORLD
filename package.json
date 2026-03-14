@@ -5,11 +5,11 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run --workspace @street-world/web dev & npm run --workspace @street-world/api start:dev",
-    "dev:web": "npm run --workspace @street-world/web dev",
-    "dev:api": "npm run --workspace @street-world/api start:dev",
-    "build": "npm run --workspace @street-world/web build && npm run --workspace @street-world/api build",
-    "lint": "npm run --workspace @street-world/web lint && npm run --workspace @street-world/api lint"
+    "dev": "pnpm --filter @street-world/web dev & pnpm --filter @street-world/api start:dev",
+    "dev:web": "pnpm --filter @street-world/web dev",
+    "dev:api": "pnpm --filter @street-world/api start:dev",
+    "build": "pnpm --filter @street-world/web build && pnpm --filter @street-world/api build",
+    "lint": "pnpm --filter @street-world/web lint && pnpm --filter @street-world/api lint"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

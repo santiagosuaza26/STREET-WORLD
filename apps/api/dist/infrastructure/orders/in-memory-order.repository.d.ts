@@ -4,5 +4,7 @@ export declare class InMemoryOrderRepository implements OrderRepository {
     private readonly store;
     create(order: Order): Promise<Order>;
     findById(id: string): Promise<Order | null>;
-    update(order: Order): Promise<Order>;
+    findByUserId(userId: string): Promise<Order[]>;
+    findAll(): Promise<Order[]>;
+    update(id: string, order: Partial<Order>): Promise<Order | null>;
 }

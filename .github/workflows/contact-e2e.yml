@@ -1,0 +1,60 @@
+name: Contact E2E
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  contact-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Start API stack
+        run: docker compose up -d --build api
+
+      - name: Wait for API health
+        run: |
+          for i in {1..60}; do
+            if curl -sf http://127.0.0.1:3001/health > /dev/null; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"
+          docker compose logs api --tail 200
+          exit 1
+
+      - name: Run contact e2e test
+        run: pnpm --filter @street-world/api test:contact:e2e
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs api --tail 200
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v

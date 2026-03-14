@@ -1,0 +1,25 @@
+FROM node:24-alpine AS base
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/package.json
+RUN pnpm install --no-frozen-lockfile
+
+FROM deps AS build
+COPY apps/api/src ./apps/api/src
+COPY apps/api/nest-cli.json ./apps/api/nest-cli.json
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+RUN pnpm --filter @street-world/api build
+
+FROM base AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/package.json
+RUN pnpm install --no-frozen-lockfile --prod
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+
+EXPOSE 3001
+CMD ["pnpm", "--filter", "@street-world/api", "start"]

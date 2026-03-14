@@ -15,6 +15,13 @@ type LoginInput = {
   password: string;
 };
 
+type AuthResponse = {
+  id: string;
+  email: string;
+  token: string;
+  expiresIn: string;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -23,7 +30,7 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  async register(input: RegisterInput) {
+  async register(input: RegisterInput): Promise<AuthResponse> {
     const existing = await this.users.findByEmail(input.email);
     if (existing) {
       throw new BadRequestException("El correo ya esta registrado");
@@ -42,7 +49,7 @@ export class AuthService {
     return this.createToken(user);
   }
 
-  async login(input: LoginInput) {
+  async login(input: LoginInput): Promise<AuthResponse> {
     const user = await this.users.findByEmail(input.email);
     if (!user) {
       throw new UnauthorizedException("Credenciales invalidas");
@@ -56,12 +63,16 @@ export class AuthService {
     return this.createToken(user);
   }
 
-  private async createToken(user: User) {
+  private async createToken(user: User): Promise<AuthResponse> {
+    const expiresIn = process.env.JWT_EXPIRES_IN ?? "7d";
     const payload = { sub: user.id, email: user.email };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const token = await this.jwtService.signAsync(payload);
+    
     return {
-      accessToken,
-      user: { id: user.id, email: user.email }
+      id: user.id,
+      email: user.email,
+      token,
+      expiresIn
     };
   }
 }

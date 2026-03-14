@@ -20,4 +20,23 @@ export class InMemoryUserRepository implements UserRepository {
   async findById(id: string): Promise<User | null> {
     return this.usersById.get(id) ?? null;
   }
+
+  async update(id: string, user: Partial<User>): Promise<User | null> {
+    const existing = this.usersById.get(id);
+    if (!existing) {
+      return null;
+    }
+
+    const updated: User = {
+      ...existing,
+      ...user,
+      id: existing.id,
+      email: existing.email,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.usersById.set(id, updated);
+    this.usersByEmail.set(updated.email, updated);
+    return updated;
+  }
 }

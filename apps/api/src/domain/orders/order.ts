@@ -1,18 +1,19 @@
 export type OrderItem = {
-  slug: string;
-  name: string;
-  price: number;
+  productId: string;
+  productName: string;
+  unitPrice: number;
   quantity: number;
+  subtotal: number;
 };
 
-export type OrderStatus = "pending" | "paid" | "failed";
+export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 export type Order = {
   id: string;
-  customerEmail: string;
-  currency: "COP";
-  items: OrderItem[];
-  totalAmount: number;
+  userId: string;
   status: OrderStatus;
+  total: number;
+  items: OrderItem[];
+  notes?: string;
   createdAt: string;
 };

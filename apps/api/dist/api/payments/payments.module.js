@@ -12,6 +12,7 @@ const payments_controller_1 = require("./payments.controller");
 const payment_service_1 = require("../../application/payments/payment.service");
 const webhook_validator_1 = require("../../application/payments/webhook-validator");
 const payment_gateway_1 = require("../../domain/payments/payment-gateway");
+const mock_gateway_1 = require("../../infrastructure/payments/mock-gateway");
 const wompi_gateway_1 = require("../../infrastructure/payments/wompi-gateway");
 const orders_module_1 = require("../orders/orders.module");
 let PaymentsModule = class PaymentsModule {
@@ -24,9 +25,15 @@ exports.PaymentsModule = PaymentsModule = __decorate([
         providers: [
             payment_service_1.PaymentService,
             webhook_validator_1.WebhookValidator,
+            wompi_gateway_1.WompiGateway,
+            mock_gateway_1.MockGateway,
             {
                 provide: payment_gateway_1.PAYMENT_GATEWAY,
-                useClass: wompi_gateway_1.WompiGateway
+                useFactory: (wompiGateway, mockGateway) => {
+                    const provider = (process.env.PAYMENTS_PROVIDER ?? "mock").toLowerCase();
+                    return provider === "wompi" ? wompiGateway : mockGateway;
+                },
+                inject: [wompi_gateway_1.WompiGateway, mock_gateway_1.MockGateway]
             }
         ]
     })

@@ -2,6 +2,8 @@ import { Order } from "./order";
 export interface OrderRepository {
     create(order: Order): Promise<Order>;
     findById(id: string): Promise<Order | null>;
-    update(order: Order): Promise<Order>;
+    findByUserId(userId: string): Promise<Order[]>;
+    findAll(): Promise<Order[]>;
+    update(id: string, order: Partial<Order>): Promise<Order | null>;
 }
 export declare const ORDER_REPOSITORY: unique symbol;

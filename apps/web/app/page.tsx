@@ -1,12 +1,16 @@
 import Link from "next/link";
+import { categories } from "./_data/catalog";
+import { sampleProducts } from "./_data/sample-products";
 import AddToCartButton from "./_components/AddToCartButton";
-import NewsletterForm from "./_components/NewsletterForm";
-import { categories, perks } from "./_data/catalog";
+import SaleSection from "./_components/SaleSection";
+import BestSellersSection from "./_components/BestSellersSection";
+import NewArrivalsSection from "./_components/NewArrivalsSection";
 import { getProducts } from "./_lib/products";
 
 export default async function HomePage() {
   const products = await getProducts();
   const featuredProducts = products.slice(0, 3);
+
   return (
     <>
       <section className="hero">
@@ -56,24 +60,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section" id="beneficios">
-        <div className="container">
-          <div className="section-title">
-            <h2>Beneficios reales para crecer</h2>
-            <p className="muted">
-              Pensado para clientes y para operaciones que quieren escalar.
-            </p>
-          </div>
-          <div className="grid cards">
-            {perks.map((perk) => (
-              <article key={perk.title} className="card">
-                <h3>{perk.title}</h3>
-                <p className="muted">{perk.description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Nueva sección: Sale */}
+      <SaleSection products={sampleProducts} />
+
+      {/* Nueva sección: Novedades */}
+      <NewArrivalsSection products={sampleProducts} />
+
+      {/* Nueva sección: Best Sellers */}
+      <BestSellersSection products={sampleProducts} />
 
       <section className="section" id="catalogo">
         <div className="container">
@@ -107,11 +101,11 @@ export default async function HomePage() {
           </div>
           <div className="grid products">
             {featuredProducts.map((product) => (
-              <article key={product.name} className="card product">
+              <article key={product.slug} className="card product">
                 {product.tag ? <div className="tag">{product.tag}</div> : null}
                 <h3>{product.name}</h3>
                 <p className="price">{product.price}</p>
-                <AddToCartButton product={product} label="Agregar" />
+                <AddToCartButton product={product} />
               </article>
             ))}
           </div>
@@ -126,7 +120,12 @@ export default async function HomePage() {
               Acceso prioritario a drops, descuentos y eventos locales.
             </p>
           </div>
-          <NewsletterForm />
+          <form className="newsletter-form">
+            <input type="email" placeholder="Tu correo" />
+            <button className="primary" type="submit">
+              Suscribirme
+            </button>
+          </form>
         </div>
       </section>
     </>

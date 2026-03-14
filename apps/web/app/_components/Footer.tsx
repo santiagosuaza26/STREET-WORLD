@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="site-footer" id="contacto">
+    <footer className="site-footer">
       <div className="container footer-grid">
         <div>
           <div className="logo">Street World</div>
@@ -11,9 +11,9 @@ export default function Footer() {
         <div>
           <h4>Marca</h4>
           <ul>
-            <li><a href="#colecciones">Colecciones</a></li>
-            <li><a href="#catalogo">Catalogo</a></li>
-            <li><a href="#beneficios">Beneficios</a></li>
+            <li><a href="/#colecciones">Colecciones</a></li>
+            <li><a href="/catalogo">Catalogo</a></li>
+            <li><a href="/beneficios">Beneficios</a></li>
           </ul>
         </div>
         <div>
@@ -21,15 +21,15 @@ export default function Footer() {
           <ul>
             <li><a href="/envios">Envios y devoluciones</a></li>
             <li><a href="/tallas">Guia de tallas</a></li>
-            <li><a href="/soporte">Soporte</a></li>
+            <li><a href="/contacto">Contacto</a></li>
           </ul>
         </div>
         <div>
           <h4>Legal</h4>
           <ul>
-            <li><a href="/privacidad">Privacidad</a></li>
-            <li><a href="/terminos">Terminos</a></li>
-            <li><a href="/pagos">Pagos</a></li>
+            <li><a href="#">Privacidad</a></li>
+            <li><a href="#">Terminos</a></li>
+            <li><a href="#">Pagos</a></li>
           </ul>
         </div>
       </div>
