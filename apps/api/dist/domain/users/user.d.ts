@@ -11,6 +11,8 @@ export type User = {
     id: string;
     email: string;
     passwordHash: string;
+    refreshTokenHash?: string;
+    refreshTokenExpiresAt?: string;
     firstName?: string;
     lastName?: string;
     phone?: string;

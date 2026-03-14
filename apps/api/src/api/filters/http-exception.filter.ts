@@ -12,6 +12,29 @@ import type { Request, Response } from "express";
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
+  private extractMessage(exception: unknown): string | string[] {
+    if (!(exception instanceof HttpException)) {
+      return "Error interno del servidor";
+    }
+
+    const response = exception.getResponse();
+    if (typeof response === "string") {
+      return response;
+    }
+
+    if (typeof response === "object" && response !== null) {
+      const maybeMessage = (response as { message?: string | string[] }).message;
+      if (Array.isArray(maybeMessage)) {
+        return maybeMessage;
+      }
+      if (typeof maybeMessage === "string") {
+        return maybeMessage;
+      }
+    }
+
+    return exception.message;
+  }
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -22,10 +45,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
-      exception instanceof HttpException
-        ? exception.message
-        : "Error interno del servidor";
+    const message = this.extractMessage(exception);
 
     if (status >= 500) {
       this.logger.error(
@@ -36,7 +56,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     response.status(status).json({
       statusCode: status,
-      error: status >= 500 ? "INTERNAL_ERROR" : "REQUEST_ERROR",
+      error:
+        status >= 500
+          ? "INTERNAL_ERROR"
+          : status === HttpStatus.TOO_MANY_REQUESTS
+            ? "TOO_MANY_REQUESTS"
+            : "REQUEST_ERROR",
       message,
       path: request.url,
       timestamp: new Date().toISOString()

@@ -11,15 +11,32 @@ type LoginInput = {
 type AuthResponse = {
     id: string;
     email: string;
-    token: string;
     expiresIn: string;
+};
+type TokenPair = {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: string;
+};
+type SessionResult = {
+    user: AuthResponse;
+    tokens: TokenPair;
 };
 export declare class AuthService {
     private readonly users;
     private readonly jwtService;
     constructor(users: UserRepository, jwtService: JwtService);
-    register(input: RegisterInput): Promise<AuthResponse>;
-    login(input: LoginInput): Promise<AuthResponse>;
-    private createToken;
+    register(input: RegisterInput): Promise<SessionResult>;
+    login(input: LoginInput): Promise<SessionResult>;
+    refresh(refreshToken: string): Promise<SessionResult>;
+    logout(refreshToken?: string): Promise<void>;
+    getAuthUser(userId: string): Promise<{
+        id: string;
+        email: string;
+    }>;
+    private createSession;
+    private createTokens;
+    private verifyRefreshToken;
+    private getRefreshTokenLifetimeMs;
 }
 export {};

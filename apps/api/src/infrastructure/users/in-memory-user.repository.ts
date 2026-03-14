@@ -31,9 +31,13 @@ export class InMemoryUserRepository implements UserRepository {
       ...existing,
       ...user,
       id: existing.id,
-      email: existing.email,
+      email: user.email ?? existing.email,
       updatedAt: new Date().toISOString(),
     };
+
+    if (user.email && user.email !== existing.email) {
+      this.usersByEmail.delete(existing.email);
+    }
 
     this.usersById.set(id, updated);
     this.usersByEmail.set(updated.email, updated);

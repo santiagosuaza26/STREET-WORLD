@@ -36,7 +36,7 @@ let AuthService = class AuthService {
             createdAt: new Date().toISOString()
         };
         await this.users.create(user);
-        return this.createToken(user);
+        return this.createSession(user);
     }
     async login(input) {
         const user = await this.users.findByEmail(input.email);
@@ -47,18 +47,100 @@ let AuthService = class AuthService {
         if (!isValid) {
             throw new common_1.UnauthorizedException("Credenciales invalidas");
         }
-        return this.createToken(user);
+        return this.createSession(user);
     }
-    async createToken(user) {
-        const expiresIn = process.env.JWT_EXPIRES_IN ?? "7d";
-        const payload = { sub: user.id, email: user.email };
-        const token = await this.jwtService.signAsync(payload);
+    async refresh(refreshToken) {
+        const payload = await this.verifyRefreshToken(refreshToken);
+        const user = await this.users.findById(String(payload.sub));
+        if (!user || !user.refreshTokenHash || !user.refreshTokenExpiresAt) {
+            throw new common_1.UnauthorizedException("Sesion invalida");
+        }
+        const isValid = await (0, bcryptjs_1.compare)(refreshToken, user.refreshTokenHash);
+        const isExpired = new Date(user.refreshTokenExpiresAt).getTime() <= Date.now();
+        if (!isValid || isExpired) {
+            throw new common_1.UnauthorizedException("Sesion expirada");
+        }
+        return this.createSession(user);
+    }
+    async logout(refreshToken) {
+        if (!refreshToken) {
+            return;
+        }
+        try {
+            const payload = await this.verifyRefreshToken(refreshToken);
+            const userId = String(payload.sub);
+            await this.users.update(userId, {
+                refreshTokenHash: "",
+                refreshTokenExpiresAt: new Date(0).toISOString(),
+            });
+        }
+        catch {
+        }
+    }
+    async getAuthUser(userId) {
+        const user = await this.users.findById(userId);
+        if (!user) {
+            throw new common_1.UnauthorizedException("Sesion invalida");
+        }
+        return { id: user.id, email: user.email };
+    }
+    async createSession(user) {
+        const tokens = await this.createTokens(user);
+        const refreshTokenHash = await (0, bcryptjs_1.hash)(tokens.refreshToken, 10);
+        const refreshExpiresAt = new Date(Date.now() + this.getRefreshTokenLifetimeMs()).toISOString();
+        await this.users.update(user.id, {
+            refreshTokenHash,
+            refreshTokenExpiresAt: refreshExpiresAt,
+        });
         return {
-            id: user.id,
-            email: user.email,
-            token,
-            expiresIn
+            user: {
+                id: user.id,
+                email: user.email,
+                expiresIn: tokens.expiresIn,
+            },
+            tokens,
         };
+    }
+    async createTokens(user) {
+        const expiresIn = process.env.JWT_EXPIRES_IN ?? "7d";
+        const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN ?? "30d";
+        const refreshSecret = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? "dev-secret";
+        const payload = { sub: user.id, email: user.email };
+        const accessToken = await this.jwtService.signAsync(payload, { expiresIn });
+        const refreshToken = await this.jwtService.signAsync(payload, {
+            secret: refreshSecret,
+            expiresIn: refreshExpiresIn,
+        });
+        return {
+            accessToken,
+            refreshToken,
+            expiresIn,
+        };
+    }
+    async verifyRefreshToken(token) {
+        const refreshSecret = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? "dev-secret";
+        try {
+            return await this.jwtService.verifyAsync(token, { secret: refreshSecret });
+        }
+        catch {
+            throw new common_1.UnauthorizedException("Sesion invalida");
+        }
+    }
+    getRefreshTokenLifetimeMs() {
+        const raw = (process.env.JWT_REFRESH_EXPIRES_IN ?? "30d").trim().toLowerCase();
+        const match = raw.match(/^(\d+)([smhd])$/);
+        if (!match) {
+            return 30 * 24 * 60 * 60 * 1000;
+        }
+        const value = Number(match[1]);
+        const unit = match[2];
+        const multipliers = {
+            s: 1000,
+            m: 60 * 1000,
+            h: 60 * 60 * 1000,
+            d: 24 * 60 * 60 * 1000,
+        };
+        return value * (multipliers[unit] ?? 24 * 60 * 60 * 1000);
     }
 };
 exports.AuthService = AuthService;

@@ -22,6 +22,10 @@ export class LoginDto {
 export class AuthResponseDto {
   id: string;
   email: string;
-  token: string;
   expiresIn: string;
+}
+
+export class AuthMeResponseDto {
+  id: string;
+  email: string;
 }

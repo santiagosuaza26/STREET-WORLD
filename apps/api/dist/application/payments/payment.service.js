@@ -20,33 +20,51 @@ let PaymentService = class PaymentService {
     constructor(gateway, orderService) {
         this.gateway = gateway;
         this.orderService = orderService;
+        this.idempotencyCache = new Map();
     }
     async createCheckout(input) {
         this.validateCheckoutRequest(input);
-        const orderItems = input.items.map(item => ({
-            productId: item.id || 'unknown',
-            productName: item.name || 'Unknown Product',
-            unitPrice: parseFloat(item.price),
+        const normalizedEmail = input.customerEmail.trim().toLowerCase();
+        const identity = input.userId?.trim() || `guest:${normalizedEmail}`;
+        const idempotencyCacheKey = this.buildIdempotencyCacheKey(identity, input.idempotencyKey);
+        if (idempotencyCacheKey) {
+            const cached = this.readCachedCheckout(idempotencyCacheKey);
+            if (cached) {
+                return cached;
+            }
+        }
+        const consolidatedItems = this.consolidateItems(input.items);
+        const orderItems = consolidatedItems.map(item => ({
+            productId: item.slug,
+            productName: item.name,
+            unitPrice: Number(item.price.toFixed(2)),
             quantity: item.quantity,
-            subtotal: parseFloat(item.price) * item.quantity
+            subtotal: Number((item.price * item.quantity).toFixed(2))
         }));
         const order = await this.orderService.createOrder({
-            userId: input.userId ?? 'guest',
+            userId: identity,
             items: orderItems
         });
         const session = await this.gateway.createCheckoutSession({
             currency: "COP",
             amount: order.total,
             reference: order.id,
-            customerEmail: input.customerEmail
+            customerEmail: normalizedEmail
         });
         if (session.provider === "mock") {
             await this.orderService.updateStatus(order.id, "PAID");
         }
-        return {
+        const result = {
             ...session,
             orderId: order.id
         };
+        if (idempotencyCacheKey) {
+            this.idempotencyCache.set(idempotencyCacheKey, {
+                expiresAt: Date.now() + 15 * 60 * 1000,
+                result,
+            });
+        }
+        return result;
     }
     async handleWebhook(event) {
         const statusMap = {
@@ -70,6 +88,11 @@ let PaymentService = class PaymentService {
         if (!Array.isArray(input.items) || input.items.length === 0) {
             throw new common_1.BadRequestException("El carrito no puede estar vacio");
         }
+        if (input.idempotencyKey) {
+            if (input.idempotencyKey.length < 8 || input.idempotencyKey.length > 120) {
+                throw new common_1.BadRequestException("Idempotency key invalido");
+            }
+        }
         for (const item of input.items) {
             if (!item.slug || !item.name) {
                 throw new common_1.BadRequestException("Item invalido");
@@ -80,7 +103,53 @@ let PaymentService = class PaymentService {
             if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
                 throw new common_1.BadRequestException("Cantidad invalida");
             }
+            if (item.quantity > 20) {
+                throw new common_1.BadRequestException("Cantidad invalida");
+            }
         }
+    }
+    consolidateItems(items) {
+        const consolidated = new Map();
+        for (const raw of items) {
+            const slug = raw.slug.trim();
+            const name = raw.name.trim();
+            const price = Number(Number(raw.price).toFixed(2));
+            const current = consolidated.get(slug);
+            if (!current) {
+                consolidated.set(slug, {
+                    slug,
+                    name,
+                    price,
+                    quantity: raw.quantity,
+                });
+                continue;
+            }
+            if (current.price !== price) {
+                throw new common_1.BadRequestException("Inconsistencia en precios del carrito");
+            }
+            current.quantity += raw.quantity;
+            if (current.quantity > 20) {
+                throw new common_1.BadRequestException("Cantidad invalida");
+            }
+        }
+        return Array.from(consolidated.values());
+    }
+    buildIdempotencyCacheKey(identity, idempotencyKey) {
+        if (!idempotencyKey) {
+            return "";
+        }
+        return `${identity}:${idempotencyKey}`;
+    }
+    readCachedCheckout(cacheKey) {
+        const cached = this.idempotencyCache.get(cacheKey);
+        if (!cached) {
+            return null;
+        }
+        if (Date.now() >= cached.expiresAt) {
+            this.idempotencyCache.delete(cacheKey);
+            return null;
+        }
+        return cached.result;
     }
 };
 exports.PaymentService = PaymentService;

@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { json } from "express";
 import type { NextFunction, Request, Response } from "express";
@@ -15,6 +15,39 @@ function getAllowedOrigins(): string[] {
     .split(",")
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0);
+}
+
+type RateBucket = {
+  count: number;
+  resetAt: number;
+};
+
+const rateBuckets = new Map<string, RateBucket>();
+
+function parseNumberEnv(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function applySecurityHeaders(res: Response) {
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("X-DNS-Prefetch-Control", "off");
+
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+}
+
+function isSensitivePath(path: string) {
+  return (
+    path.startsWith("/auth/") ||
+    path.startsWith("/contact") ||
+    path.startsWith("/payments/checkout") ||
+    path.startsWith("/payments/webhook")
+  );
 }
 
 async function bootstrap() {
@@ -43,8 +76,42 @@ async function bootstrap() {
     },
     credentials: true
   });
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    })
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
   app.use((req: Request, res: Response, next: NextFunction) => {
+    applySecurityHeaders(res);
+
+    if (isSensitivePath(req.path)) {
+      const windowMs = parseNumberEnv(process.env.RATE_LIMIT_WINDOW_MS, 60_000);
+      const maxRequests = parseNumberEnv(process.env.RATE_LIMIT_MAX, 30);
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
+      const key = `${ip}:${req.path}`;
+      const now = Date.now();
+      const current = rateBuckets.get(key);
+
+      if (!current || now >= current.resetAt) {
+        rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+      } else if (current.count >= maxRequests) {
+        res.status(429).json({
+          statusCode: 429,
+          error: "TOO_MANY_REQUESTS",
+          message: "Demasiadas solicitudes. Intenta nuevamente en unos minutos.",
+          path: req.originalUrl,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      } else {
+        current.count += 1;
+      }
+    }
+
     const start = Date.now();
     res.on("finish", () => {
       const duration = Date.now() - start;

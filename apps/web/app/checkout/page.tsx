@@ -79,13 +79,20 @@ export default function CheckoutPage() {
     setError(null);
     setIsLoading(true);
     try {
+      const idempotencyKey =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/payments/checkout`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-idempotency-key": idempotencyKey,
           },
+          credentials: "include",
           body: JSON.stringify({
             currency: "COP",
             customerEmail: effectiveEmail,

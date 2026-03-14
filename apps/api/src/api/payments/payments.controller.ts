@@ -1,10 +1,20 @@
-import { BadRequestException, Body, Controller, Post, Req, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  Post,
+  Req,
+  UnauthorizedException,
+  ValidationPipe,
+} from "@nestjs/common";
 import type { Request } from "express";
 import { CheckoutRequest } from "../../application/payments/checkout-request";
 import { CheckoutResult } from "../../application/payments/checkout-result";
 import { PaymentService } from "../../application/payments/payment.service";
 import { normalizeWebhookPayload } from "../../application/payments/webhook-normalizer";
 import { WebhookValidator } from "../../application/payments/webhook-validator";
+import { CheckoutDto } from "./dtos";
 
 @Controller("payments")
 export class PaymentsController {
@@ -14,8 +24,16 @@ export class PaymentsController {
   ) {}
 
   @Post("checkout")
-  async createCheckout(@Body() input: CheckoutRequest): Promise<CheckoutResult> {
-    return this.paymentService.createCheckout(input);
+  async createCheckout(
+    @Body(ValidationPipe) input: CheckoutDto,
+    @Headers("x-idempotency-key") idempotencyKey?: string
+  ): Promise<CheckoutResult> {
+    const payload: CheckoutRequest = {
+      ...input,
+      idempotencyKey: typeof idempotencyKey === "string" ? idempotencyKey.trim() : undefined,
+    };
+
+    return this.paymentService.createCheckout(payload);
   }
 
   @Post("webhook")

@@ -17,6 +17,8 @@ export class TypeOrmUserRepository implements UserRepository {
       id: user.id,
       email: user.email,
       passwordHash: user.passwordHash,
+      refreshTokenHash: user.refreshTokenHash,
+      refreshTokenExpiresAt: user.refreshTokenExpiresAt ? new Date(user.refreshTokenExpiresAt) : undefined,
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone,
@@ -45,6 +47,10 @@ export class TypeOrmUserRepository implements UserRepository {
     await this.repository.update(id, {
       ...(user.email !== undefined && { email: user.email }),
       ...(user.passwordHash !== undefined && { passwordHash: user.passwordHash }),
+      ...(user.refreshTokenHash !== undefined && { refreshTokenHash: user.refreshTokenHash }),
+      ...(user.refreshTokenExpiresAt !== undefined && {
+        refreshTokenExpiresAt: new Date(user.refreshTokenExpiresAt)
+      }),
       ...(user.firstName !== undefined && { firstName: user.firstName }),
       ...(user.lastName !== undefined && { lastName: user.lastName }),
       ...(user.phone !== undefined && { phone: user.phone }),
@@ -64,6 +70,8 @@ export class TypeOrmUserRepository implements UserRepository {
       id: entity.id,
       email: entity.email,
       passwordHash: entity.passwordHash,
+      refreshTokenHash: entity.refreshTokenHash,
+      refreshTokenExpiresAt: entity.refreshTokenExpiresAt?.toISOString(),
       firstName: entity.firstName,
       lastName: entity.lastName,
       phone: entity.phone,

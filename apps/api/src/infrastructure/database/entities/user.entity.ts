@@ -13,6 +13,12 @@ export class UserEntity {
   passwordHash: string;
 
   @Column({ nullable: true })
+  refreshTokenHash?: string;
+
+  @Column({ nullable: true })
+  refreshTokenExpiresAt?: Date;
+
+  @Column({ nullable: true })
   firstName?: string;
 
   @Column({ nullable: true })

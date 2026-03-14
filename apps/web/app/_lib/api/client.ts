@@ -5,51 +5,50 @@ const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000');
 
 class ApiClient {
   private client: AxiosInstance;
-  private token: string | null = null;
 
   constructor() {
     this.client = axios.create({
       baseURL: API_URL,
       timeout: API_TIMEOUT,
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Load token from localStorage if available
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('auth_token');
-      if (this.token) {
-        this.setAuthHeader(this.token);
-      }
-    }
-
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid - clear it
-          this.clearAuth();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+      async (error: AxiosError) => {
+        const originalRequest = error.config as (typeof error.config & { _retry?: boolean }) | undefined;
+        const requestUrl = originalRequest?.url ?? '';
+        const isAuthRoute = requestUrl.startsWith('/auth/login')
+          || requestUrl.startsWith('/auth/register')
+          || requestUrl.startsWith('/auth/me')
+          || requestUrl.startsWith('/auth/refresh')
+          || requestUrl.startsWith('/auth/logout');
+
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute) {
+          originalRequest._retry = true;
+          try {
+            await this.client.post('/auth/refresh');
+            return this.client(originalRequest);
+          } catch {
+            this.clearAuth();
           }
         }
+
         return Promise.reject(error);
       }
     );
   }
 
-  setAuthHeader(token: string) {
-    this.token = token;
-    this.client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }
+  setAuthHeader(_token: string) {}
 
   clearAuth() {
-    this.token = null;
-    delete this.client.defaults.headers.common['Authorization'];
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('user_email');
     }
   }
 

@@ -13,6 +13,25 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
     constructor() {
         this.logger = new common_1.Logger(HttpExceptionFilter_1.name);
     }
+    extractMessage(exception) {
+        if (!(exception instanceof common_1.HttpException)) {
+            return "Error interno del servidor";
+        }
+        const response = exception.getResponse();
+        if (typeof response === "string") {
+            return response;
+        }
+        if (typeof response === "object" && response !== null) {
+            const maybeMessage = response.message;
+            if (Array.isArray(maybeMessage)) {
+                return maybeMessage;
+            }
+            if (typeof maybeMessage === "string") {
+                return maybeMessage;
+            }
+        }
+        return exception.message;
+    }
     catch(exception, host) {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse();
@@ -20,15 +39,17 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
         const status = exception instanceof common_1.HttpException
             ? exception.getStatus()
             : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
-        const message = exception instanceof common_1.HttpException
-            ? exception.message
-            : "Error interno del servidor";
+        const message = this.extractMessage(exception);
         if (status >= 500) {
             this.logger.error(`${request.method} ${request.url} -> ${status}: ${message}`, exception instanceof Error ? exception.stack : undefined);
         }
         response.status(status).json({
             statusCode: status,
-            error: status >= 500 ? "INTERNAL_ERROR" : "REQUEST_ERROR",
+            error: status >= 500
+                ? "INTERNAL_ERROR"
+                : status === common_1.HttpStatus.TOO_MANY_REQUESTS
+                    ? "TOO_MANY_REQUESTS"
+                    : "REQUEST_ERROR",
             message,
             path: request.url,
             timestamp: new Date().toISOString()

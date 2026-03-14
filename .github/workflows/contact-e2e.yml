@@ -48,6 +48,9 @@ jobs:
           docker compose logs api --tail 200
           exit 1
 
+      - name: Run auth e2e test
+        run: pnpm --filter @street-world/api test:auth:e2e
+
       - name: Run contact e2e test
         run: pnpm --filter @street-world/api test:contact:e2e
 

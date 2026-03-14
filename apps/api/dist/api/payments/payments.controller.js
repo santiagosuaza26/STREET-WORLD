@@ -17,13 +17,18 @@ const common_1 = require("@nestjs/common");
 const payment_service_1 = require("../../application/payments/payment.service");
 const webhook_normalizer_1 = require("../../application/payments/webhook-normalizer");
 const webhook_validator_1 = require("../../application/payments/webhook-validator");
+const dtos_1 = require("./dtos");
 let PaymentsController = class PaymentsController {
     constructor(paymentService, webhookValidator) {
         this.paymentService = paymentService;
         this.webhookValidator = webhookValidator;
     }
-    async createCheckout(input) {
-        return this.paymentService.createCheckout(input);
+    async createCheckout(input, idempotencyKey) {
+        const payload = {
+            ...input,
+            idempotencyKey: typeof idempotencyKey === "string" ? idempotencyKey.trim() : undefined,
+        };
+        return this.paymentService.createCheckout(payload);
     }
     async handleWebhook(payload, req) {
         const rawBody = req.rawBody ?? JSON.stringify(payload);
@@ -43,9 +48,10 @@ let PaymentsController = class PaymentsController {
 exports.PaymentsController = PaymentsController;
 __decorate([
     (0, common_1.Post)("checkout"),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Body)(common_1.ValidationPipe)),
+    __param(1, (0, common_1.Headers)("x-idempotency-key")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [dtos_1.CheckoutDto, String]),
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "createCheckout", null);
 __decorate([
