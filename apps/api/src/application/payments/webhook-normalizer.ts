@@ -2,10 +2,15 @@ import { PaymentWebhookEvent } from "./webhook-event";
 
 export function normalizeWebhookPayload(payload: unknown): PaymentWebhookEvent | null {
   const data = payload as {
+    id?: string;
+    event?: string;
     reference?: string;
     status?: string;
     data?: {
+      id?: string;
+      event?: string;
       transaction?: {
+        id?: string;
         reference?: string;
         status?: string;
       };
@@ -24,7 +29,15 @@ export function normalizeWebhookPayload(payload: unknown): PaymentWebhookEvent |
     return null;
   }
 
+  const eventId =
+    data?.id ??
+    data?.event ??
+    data?.data?.id ??
+    data?.data?.event ??
+    data?.data?.transaction?.id;
+
   return {
+    eventId,
     reference,
     status: mapStatus(rawStatus)
   };

@@ -6,14 +6,27 @@
     "start:dev": "nest start --watch",
     "build": "nest build",
     "lint": "eslint . --ext .ts",
+    "migration:create": "typeorm-ts-node-commonjs -d src/migration-data-source.ts migration:create src/infrastructure/database/migrations/NewMigration",
+    "migration:generate": "typeorm-ts-node-commonjs -d src/migration-data-source.ts migration:generate src/infrastructure/database/migrations/AutoMigration",
+    "migration:run": "typeorm-ts-node-commonjs -d src/migration-data-source.ts migration:run",
+    "migration:revert": "typeorm-ts-node-commonjs -d src/migration-data-source.ts migration:revert",
     "test:auth:e2e": "node test/auth.e2e.mjs",
-    "test:contact:e2e": "node test/contact.e2e.mjs"
+    "test:contact:e2e": "node test/contact.e2e.mjs",
+    "test:webhook:e2e": "node test/webhook.e2e.mjs",
+    "test:checkout-shipping:e2e": "node test/checkout-shipping.e2e.mjs",
+    "test:payments-metrics:e2e": "node test/payments-metrics.e2e.mjs",
+    "test:products-filters:e2e": "node test/products-filters.e2e.mjs"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.65.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.205.0",
+    "@opentelemetry/sdk-node": "^0.205.0",
     "@nestjs/common": "10.3.9",
     "@nestjs/core": "10.3.9",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/platform-express": "10.3.9",
+    "@nestjs/schedule": "^3.0.4",
     "@nestjs/typeorm": "^11.0.0",
     "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
@@ -23,16 +36,21 @@
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "pg": "^8.18.0",
-    "reflect-metadata": "0.2.2",
+    "redis": "^4.7.0",
+    "reflect-metadata": "^0.1.14",
     "rxjs": "7.8.1",
+    "sql.js": "1.11.0",
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@nestjs/cli": "10.3.2",
     "@nestjs/schematics": "10.1.1",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "@types/node": "20.14.10",
     "eslint": "8.57.0",
+    "ts-node": "^10.9.2",
     "typescript": "5.5.4"
   }
 }

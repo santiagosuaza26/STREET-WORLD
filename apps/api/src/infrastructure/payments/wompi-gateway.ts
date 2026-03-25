@@ -2,7 +2,8 @@ import { Injectable } from "@nestjs/common";
 import {
   CheckoutInput,
   CheckoutSession,
-  PaymentGateway
+  PaymentGateway,
+  TransactionStatus
 } from "../../domain/payments/payment-gateway";
 
 @Injectable()
@@ -22,5 +23,10 @@ export class WompiGateway implements PaymentGateway {
       checkoutUrl,
       reference: input.reference
     };
+  }
+
+  async getTransactionStatus(_reference: string): Promise<TransactionStatus> {
+    // Placeholder until provider polling endpoint is wired with credentials.
+    return "unknown";
   }
 }

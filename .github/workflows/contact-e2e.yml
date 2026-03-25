@@ -51,6 +51,9 @@ jobs:
       - name: Run auth e2e test
         run: pnpm --filter @street-world/api test:auth:e2e
 
+      - name: Run webhook e2e test
+        run: pnpm --filter @street-world/api test:webhook:e2e
+
       - name: Run contact e2e test
         run: pnpm --filter @street-world/api test:contact:e2e
 

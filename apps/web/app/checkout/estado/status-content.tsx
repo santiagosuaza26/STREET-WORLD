@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { formatPrice } from "../../_lib/price";
+import { useCart } from "../../_state/CartContext";
 
 type OrderResponse = {
   id: string;
@@ -14,6 +15,7 @@ type OrderResponse = {
 };
 
 export default function CheckoutStatusContent() {
+  const { clearCart } = useCart();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -21,19 +23,32 @@ export default function CheckoutStatusContent() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [cartClearedAfterPaid, setCartClearedAfterPaid] = useState(false);
+
+  const isPaid =
+    order?.status === "PAID" ||
+    order?.status === "SHIPPED" ||
+    order?.status === "DELIVERED";
 
   const statusLabel = useMemo(() => {
     if (!order) {
       return "";
     }
     if (order.status === "PAID" || order.status === "SHIPPED" || order.status === "DELIVERED") {
-      return "Pago aprobado";
+      return "Compra confirmada";
     }
     if (order.status === "CANCELLED") {
       return "Pago rechazado";
     }
     return "Pago pendiente";
   }, [order]);
+
+  useEffect(() => {
+    if (isPaid && !cartClearedAfterPaid) {
+      clearCart();
+      setCartClearedAfterPaid(true);
+    }
+  }, [cartClearedAfterPaid, clearCart, isPaid]);
 
   useEffect(() => {
     if (!orderId) {

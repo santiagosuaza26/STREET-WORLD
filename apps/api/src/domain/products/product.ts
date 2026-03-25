@@ -1,7 +1,12 @@
 export type Product = {
   id: string;
+  slug?: string;
   name: string;
+  summary?: string;
   description: string;
+  tag?: string;
+  gender?: string;
+  highlights?: string[];
   price: number;
   salePrice?: number;
   onSale?: boolean;

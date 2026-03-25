@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import type { TypeOrmModuleOptions } from "@nestjs/typeorm";
 import * as dotenv from "dotenv";
@@ -11,6 +12,7 @@ import {
   OrderItemEntity,
   PaymentEntity,
 } from "./infrastructure/database/entities";
+import { RedisModule } from "./infrastructure/cache/redis.module";
 
 dotenv.config();
 
@@ -26,8 +28,9 @@ const typeOrmConfig: TypeOrmModuleOptions = process.env.DATABASE_URL
       logging: process.env.NODE_ENV === "development",
     }
   : {
-      type: "sqlite",
-      database: process.env.DB_PATH || "street_world.db",
+      type: "sqljs",
+      autoSave: true,
+      location: process.env.DB_PATH || "street_world.db",
       entities: [UserEntity, ProductEntity, ContactMessageEntity, OrderEntity, OrderItemEntity, PaymentEntity],
       synchronize: shouldSynchronize,
       logging: process.env.NODE_ENV === "development",
@@ -35,6 +38,8 @@ const typeOrmConfig: TypeOrmModuleOptions = process.env.DATABASE_URL
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
+    RedisModule,
     TypeOrmModule.forRoot(typeOrmConfig),
     TypeOrmModule.forFeature([UserEntity, ProductEntity, ContactMessageEntity, OrderEntity, OrderItemEntity, PaymentEntity]),
     ApiModule,

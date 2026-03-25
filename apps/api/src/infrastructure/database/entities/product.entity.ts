@@ -5,11 +5,26 @@ export class ProductEntity {
   @PrimaryColumn('uuid')
   id: string;
 
+  @Column({ unique: true, nullable: true })
+  slug?: string;
+
   @Column()
   name: string;
 
   @Column({ type: 'text' })
   description: string;
+
+  @Column({ type: 'text', nullable: true })
+  summary?: string;
+
+  @Column({ nullable: true })
+  tag?: string;
+
+  @Column({ default: 'unisex' })
+  gender: string;
+
+  @Column('simple-array', { nullable: true })
+  highlights?: string[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;

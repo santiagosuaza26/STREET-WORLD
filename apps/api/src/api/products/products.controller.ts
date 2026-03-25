@@ -14,9 +14,14 @@ export class ProductsController {
     return this.productsService.getAll();
   }
 
-  @Get(":id")
-  async getById(@Param("id") id: string) {
-    const product = await this.productsService.getById(id);
+  @Get("filters")
+  async getFilters() {
+    return this.productsService.getFilters();
+  }
+
+  @Get(":idOrSlug")
+  async getById(@Param("idOrSlug") idOrSlug: string) {
+    const product = await this.productsService.getById(idOrSlug);
     if (!product) {
       throw new NotFoundException("Producto no encontrado");
     }

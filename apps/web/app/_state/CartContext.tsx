@@ -8,6 +8,7 @@ export type CartItem = {
   price: number;
   priceLabel: string;
   size: string;
+  color?: string;
   quantity: number;
 };
 
@@ -17,14 +18,15 @@ type AddItemInput = {
   price: number;
   priceLabel: string;
   size: string;
+  color?: string;
 };
 
 type CartContextValue = {
   items: CartItem[];
   isOpen: boolean;
   addItem: (item: AddItemInput, quantity?: number) => void;
-  removeItem: (slug: string, size: string) => void;
-  updateQuantity: (slug: string, size: string, quantity: number) => void;
+  removeItem: (slug: string, size: string, color?: string) => void;
+  updateQuantity: (slug: string, size: string, quantity: number, color?: string) => void;
   openCart: () => void;
   closeCart: () => void;
   clearCart: () => void;
@@ -70,11 +72,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items]);
 
   const addItem = (item: AddItemInput, quantity = 1) => {
+    const itemColor = item.color?.trim() || "";
     setItems((current) => {
-      const existing = current.find((entry) => entry.slug === item.slug && entry.size === item.size);
+      const existing = current.find(
+        (entry) =>
+          entry.slug === item.slug &&
+          entry.size === item.size &&
+          (entry.color?.trim() || "") === itemColor
+      );
       if (existing) {
         return current.map((entry) =>
-          entry.slug === item.slug && entry.size === item.size
+          entry.slug === item.slug &&
+          entry.size === item.size &&
+          (entry.color?.trim() || "") === itemColor
             ? { ...entry, quantity: entry.quantity + quantity }
             : entry
         );
@@ -83,18 +93,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const removeItem = (slug: string, size: string) => {
-    setItems((current) => current.filter((entry) => !(entry.slug === slug && entry.size === size)));
+  const removeItem = (slug: string, size: string, color?: string) => {
+    const normalizedColor = color?.trim() || "";
+    setItems((current) =>
+      current.filter(
+        (entry) =>
+          !(
+            entry.slug === slug &&
+            entry.size === size &&
+            (entry.color?.trim() || "") === normalizedColor
+          )
+      )
+    );
   };
 
-  const updateQuantity = (slug: string, size: string, quantity: number) => {
+  const updateQuantity = (slug: string, size: string, quantity: number, color?: string) => {
+    const normalizedColor = color?.trim() || "";
     if (quantity <= 0) {
-      removeItem(slug, size);
+      removeItem(slug, size, color);
       return;
     }
     setItems((current) =>
       current.map((entry) =>
-        entry.slug === slug && entry.size === size ? { ...entry, quantity } : entry
+        entry.slug === slug &&
+        entry.size === size &&
+        (entry.color?.trim() || "") === normalizedColor
+          ? { ...entry, quantity }
+          : entry
       )
     );
   };

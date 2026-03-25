@@ -8,25 +8,46 @@ type ProductPurchaseActionsProps = {
   product: Product;
   selectedSize?: string;
   onSizeChange?: (size: string) => void;
+  selectedColor?: string;
+  onColorChange?: (color: string) => void;
 };
+
+function isSingleSize(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return normalized === "unica" || normalized === "única";
+}
 
 export default function ProductPurchaseActions({ 
   product,
   selectedSize: externalSelectedSize,
-  onSizeChange: externalOnSizeChange
+  onSizeChange: externalOnSizeChange,
+  selectedColor: externalSelectedColor,
+  onColorChange: externalOnColorChange
 }: ProductPurchaseActionsProps) {
   const [internalSelectedSize, setInternalSelectedSize] = useState<string>("");
+  const [internalSelectedColor, setInternalSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string>("");
 
   // Usar el tamaño externo si se proporciona, sino usar el interno
   const selectedSize = externalSelectedSize !== undefined ? externalSelectedSize : internalSelectedSize;
+  const selectedColor =
+    externalSelectedColor !== undefined ? externalSelectedColor : internalSelectedColor;
   
   const handleSizeChange = (size: string) => {
     if (externalOnSizeChange) {
       externalOnSizeChange(size);
     } else {
       setInternalSelectedSize(size);
+    }
+    setError("");
+  };
+
+  const handleColorChange = (color: string) => {
+    if (externalOnColorChange) {
+      externalOnColorChange(color);
+    } else {
+      setInternalSelectedColor(color);
     }
     setError("");
   };
@@ -39,7 +60,28 @@ export default function ProductPurchaseActions({
   };
 
   const hasSizes = product.sizes && product.sizes.length > 0;
-  const sizeRequired = hasSizes && product.sizes[0] !== "Unica";
+  const sizeRequired = hasSizes && product.sizes.some((size) => !isSingleSize(size));
+  const hasColors = product.colors && product.colors.length > 0;
+  const colorRequired = Boolean(product.colors && product.colors.length > 1);
+  const outOfStock =
+    product.stockCount !== undefined
+      ? product.stockCount <= 0
+      : product.stock.toLowerCase().includes("agot");
+
+  const validateBeforeAdd = () => {
+    if (sizeRequired && !selectedSize) {
+      setError("Por favor, selecciona una talla");
+      return false;
+    }
+
+    if (colorRequired && !selectedColor) {
+      setError("Por favor, selecciona un color");
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
 
   return (
     <>
@@ -50,15 +92,51 @@ export default function ProductPurchaseActions({
         </div>
       )}
 
+      {hasSizes && (
+        <div className="detail-option-group">
+          <span className="muted">Talla</span>
+          <div className="chip-row">
+            {product.sizes.map((size) => (
+              <button
+                key={size}
+                className={`chip ${selectedSize === size ? "active" : ""}`}
+                onClick={() => handleSizeChange(size)}
+                type="button"
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hasColors && (
+        <div className="detail-option-group">
+          <span className="muted">Color</span>
+          <div className="chip-row">
+            {product.colors?.map((color) => (
+              <button
+                key={color}
+                className={`chip ${selectedColor === color ? "active" : ""}`}
+                onClick={() => handleColorChange(color)}
+                type="button"
+              >
+                {color}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Selector de Cantidad */}
       <div className="detail-quantity">
         <span className="muted">Cantidad</span>
         <div className="qty-stepper">
-          <button className="ghost" onClick={decrement} type="button">
+          <button className="ghost" onClick={decrement} type="button" disabled={quantity <= 1 || outOfStock}>
             -
           </button>
           <span>{quantity}</span>
-          <button className="ghost" onClick={increment} type="button">
+          <button className="ghost" onClick={increment} type="button" disabled={quantity >= 10 || outOfStock}>
             +
           </button>
         </div>
@@ -70,7 +148,10 @@ export default function ProductPurchaseActions({
           product={product}
           quantity={quantity}
           size={selectedSize}
+          color={selectedColor}
+          disabled={outOfStock}
           onMissingSize={handleMissingSize}
+          onBeforeAdd={validateBeforeAdd}
         />
         <AddToCartButton
           product={product}
@@ -79,7 +160,10 @@ export default function ProductPurchaseActions({
           openOnAdd
           quantity={quantity}
           size={selectedSize}
+          color={selectedColor}
+          disabled={outOfStock}
           onMissingSize={handleMissingSize}
+          onBeforeAdd={validateBeforeAdd}
         />
       </div>
     </>

@@ -11,8 +11,10 @@ type ProductDetailClientProps = {
 
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
 
   const hasSizes = product.sizes && product.sizes.length > 0 && product.sizes[0] !== "Unica";
+  const hasColors = Boolean(product.colors && product.colors.length > 0);
 
   return (
     <section className="section product-detail">
@@ -35,6 +37,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               product={product} 
               selectedSize={selectedSize}
               onSizeChange={setSelectedSize}
+              selectedColor={selectedColor}
+              onColorChange={setSelectedColor}
             />
           </div>
           <div className="card">
@@ -59,6 +63,23 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 ))}
               </div>
             </div>
+            {hasColors && (
+              <div className="size-list">
+                <p className="muted">Colores</p>
+                <div className="chip-row">
+                  {product.colors?.map((color) => (
+                    <button
+                      key={color}
+                      className={`chip ${selectedColor === color ? "active" : ""}`}
+                      onClick={() => setSelectedColor(color)}
+                      type="button"
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="muted">Stock: {product.stock}</p>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import AddToCartButton from "./AddToCartButton";
+import CatalogQuickAddModal from "./CatalogQuickAddModal";
 import { parsePriceToNumber } from "../_lib/price";
 import type { Product, Gender } from "../_data/products";
 
@@ -50,6 +50,7 @@ export default function CatalogFilters({ products }: CatalogFiltersProps) {
   const [activeCategory, setActiveCategory] = useState(normalizedCategory);
   const [sort, setSort] = useState<SortOption>(normalizedSort);
   const [query, setQuery] = useState(normalizedQuery);
+  const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     setActiveGender(normalizedGender);
@@ -304,13 +305,20 @@ export default function CatalogFilters({ products }: CatalogFiltersProps) {
               <p className="muted">{product.category}</p>
               <h3>{product.name}</h3>
               <p className="muted">{product.summary}</p>
+              <p className="muted">Stock: {product.stock}</p>
               <div className="product-footer">
                 <span className="price">{product.price}</span>
                 <div className="product-actions">
                   <Link className="button-link ghost" href={`/catalogo/${product.slug}`}>
                     Ver detalle
                   </Link>
-                  <AddToCartButton product={product} label="Agregar" variant="primary" />
+                  <button
+                    className="primary"
+                    type="button"
+                    onClick={() => setQuickAddProduct(product)}
+                  >
+                    Agregar
+                  </button>
                 </div>
               </div>
             </article>
@@ -321,6 +329,12 @@ export default function CatalogFilters({ products }: CatalogFiltersProps) {
           <p>No encontramos productos que coincidan con tu búsqueda.</p>
         </div>
       )}
+
+      <CatalogQuickAddModal
+        product={quickAddProduct}
+        isOpen={Boolean(quickAddProduct)}
+        onClose={() => setQuickAddProduct(null)}
+      />
     </>
   );
 }

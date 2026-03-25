@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Req,
@@ -8,6 +9,7 @@ import {
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
+import { randomBytes } from "crypto";
 import type { Request, Response } from "express";
 import { AuthService } from "../../application/auth/auth.service";
 import { JwtAuthGuard } from "../guards";
@@ -44,6 +46,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response
   ): Promise<AuthResponseDto> {
+    this.assertCsrf(req);
     const refreshToken = this.extractCookie(req, this.getRefreshCookieName());
     const result = await this.authService.refresh(refreshToken);
     this.setAuthCookies(res, result.tokens.accessToken, result.tokens.refreshToken);
@@ -52,6 +55,7 @@ export class AuthController {
 
   @Post("logout")
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    this.assertCsrf(req);
     const refreshToken = this.extractCookie(req, this.getRefreshCookieName());
     await this.authService.logout(refreshToken);
     this.clearAuthCookies(res);
@@ -67,6 +71,7 @@ export class AuthController {
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
     const secure = process.env.COOKIE_SECURE === "true";
     const domain = process.env.COOKIE_DOMAIN || undefined;
+    const csrfToken = randomBytes(24).toString("hex");
 
     res.cookie(this.getAccessCookieName(), accessToken, {
       httpOnly: true,
@@ -74,11 +79,20 @@ export class AuthController {
       sameSite: "lax",
       path: "/",
       domain,
-      maxAge: this.getCookieMaxAge(process.env.JWT_EXPIRES_IN ?? "7d"),
+      maxAge: this.getCookieMaxAge(process.env.JWT_EXPIRES_IN ?? "15m"),
     });
 
     res.cookie(this.getRefreshCookieName(), refreshToken, {
       httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      domain,
+      maxAge: this.getCookieMaxAge(process.env.JWT_REFRESH_EXPIRES_IN ?? "30d"),
+    });
+
+    res.cookie(this.getCsrfCookieName(), csrfToken, {
+      httpOnly: false,
       secure,
       sameSite: "lax",
       path: "/",
@@ -93,6 +107,7 @@ export class AuthController {
 
     res.clearCookie(this.getAccessCookieName(), { path: "/", sameSite: "lax", secure, domain });
     res.clearCookie(this.getRefreshCookieName(), { path: "/", sameSite: "lax", secure, domain });
+    res.clearCookie(this.getCsrfCookieName(), { path: "/", sameSite: "lax", secure, domain });
   }
 
   private extractCookie(req: Request, cookieName: string): string {
@@ -117,6 +132,24 @@ export class AuthController {
 
   private getRefreshCookieName() {
     return process.env.REFRESH_TOKEN_COOKIE_NAME ?? "refresh_token";
+  }
+
+  private getCsrfCookieName() {
+    return process.env.CSRF_COOKIE_NAME ?? "csrf_token";
+  }
+
+  private getCsrfHeaderName() {
+    return process.env.CSRF_HEADER_NAME ?? "x-csrf-token";
+  }
+
+  private assertCsrf(req: Request) {
+    const csrfCookie = this.extractCookie(req, this.getCsrfCookieName());
+    const headerName = this.getCsrfHeaderName().toLowerCase();
+    const csrfHeader = String(req.headers[headerName] ?? "").trim();
+
+    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+      throw new ForbiddenException("Token CSRF invalido");
+    }
   }
 
   private getCookieMaxAge(expiresIn: string): number {

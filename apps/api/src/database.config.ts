@@ -8,7 +8,12 @@ import { OrderItemEntity } from './infrastructure/database/entities/order-item.e
 import { PaymentEntity } from './infrastructure/database/entities/payment.entity';
 
 const shouldSynchronize =
-  process.env.TYPEORM_SYNCHRONIZE === 'true' || process.env.NODE_ENV === 'development';
+  process.env.TYPEORM_SYNCHRONIZE === 'true' && process.env.NODE_ENV !== 'production';
+
+const migrationGlobs = [
+  'src/infrastructure/database/migrations/*.{ts,js}',
+  'dist/infrastructure/database/migrations/*.js',
+];
 
 const dataSourceOptions: DataSourceOptions = process.env.DATABASE_URL
   ? {
@@ -17,16 +22,17 @@ const dataSourceOptions: DataSourceOptions = process.env.DATABASE_URL
       synchronize: shouldSynchronize,
       logging: process.env.NODE_ENV === 'development',
       entities: [UserEntity, ProductEntity, CategoryEntity, ContactMessageEntity, OrderEntity, OrderItemEntity, PaymentEntity],
-      migrations: ['src/infrastructure/database/migrations/*.ts'],
+      migrations: migrationGlobs,
       subscribers: [],
     }
   : {
-      type: 'sqlite',
-      database: process.env.DB_PATH || 'street_world.db',
+      type: 'sqljs',
+      autoSave: true,
+      location: process.env.DB_PATH || 'street_world.db',
       synchronize: shouldSynchronize,
       logging: process.env.NODE_ENV === 'development',
       entities: [UserEntity, ProductEntity, CategoryEntity, ContactMessageEntity, OrderEntity, OrderItemEntity, PaymentEntity],
-      migrations: ['src/infrastructure/database/migrations/*.ts'],
+      migrations: migrationGlobs,
       subscribers: [],
     };
 

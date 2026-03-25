@@ -1,18 +1,23 @@
 export type Gender = "hombre" | "mujer" | "niños";
-export type ProductCategory = "Camisetas" | "Tanks" | "Medias" | "Buzos" | "Shorts" | "Gorras" | "Polos" | "Joggers" | "Pantalones" | "Camisas" | "Jeans" | "Chaquetas";
+export type ProductCategory = string;
 
 export type Product = {
+  id?: string;
   slug: string;
   name: string;
   price: string;
   category: ProductCategory;
-  gender: Gender;
+  gender: Gender | "unisex";
   tag?: string;
   summary: string;
   description: string;
   highlights: string[];
   sizes: string[];
   stock: string;
+  stockCount?: number;
+  colors?: string[];
+  brand?: string;
+  collection?: string;
 };
 
 export const products: Product[] = [

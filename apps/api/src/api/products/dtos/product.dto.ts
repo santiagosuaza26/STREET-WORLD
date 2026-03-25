@@ -2,8 +2,13 @@ import { IsString, IsNumber, IsOptional, MinLength, Min, IsBoolean, IsArray } fr
 
 export class ProductResponseDto {
   id: string;
+  slug?: string;
   name: string;
+  summary?: string;
   description: string;
+  tag?: string;
+  gender?: string;
+  highlights?: string[];
   price: number;
   salePrice?: number;
   onSale?: boolean;
@@ -22,13 +27,34 @@ export class ProductResponseDto {
 }
 
 export class CreateProductDto {
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
   @IsString()
   @MinLength(3)
   name: string;
 
+  @IsOptional()
+  @IsString()
+  summary?: string;
+
   @IsString()
   @MinLength(10)
   description: string;
+
+  @IsOptional()
+  @IsString()
+  tag?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  highlights?: string[];
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
@@ -94,11 +120,32 @@ export class CreateProductDto {
 export class UpdateProductDto {
   @IsOptional()
   @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()
   @IsString()
+  summary?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  tag?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  highlights?: string[];
 
   @IsOptional()
   @IsNumber()

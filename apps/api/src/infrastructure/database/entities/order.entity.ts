@@ -1,4 +1,13 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { UserEntity } from './user.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { PaymentEntity } from './payment.entity';
@@ -13,34 +22,38 @@ export enum OrderStatus {
 
 @Entity('orders')
 export class OrderEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'uuid' })
   userId: string;
 
-  @Column({ type: 'varchar', default: OrderStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.PENDING,
+  })
   status: OrderStatus;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   notes?: string;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ nullable: true })
+  @UpdateDateColumn()
   updatedAt?: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.orders)
+  @ManyToOne(() => UserEntity, (user: UserEntity) => user.orders)
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @OneToMany(() => OrderItemEntity, (item) => item.order)
+  @OneToMany(() => OrderItemEntity, (item: OrderItemEntity) => item.order)
   items: OrderItemEntity[];
 
-  @OneToMany(() => PaymentEntity, (payment) => payment.order)
+  @OneToMany(() => PaymentEntity, (payment: PaymentEntity) => payment.order)
   payments: PaymentEntity[];
 }

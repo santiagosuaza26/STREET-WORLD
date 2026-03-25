@@ -10,9 +10,18 @@ import { AuthController } from "./auth.controller";
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? "dev-secret",
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? "7d" }
+    JwtModule.registerAsync({
+      useFactory: () => {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          throw new Error("JWT_SECRET is required");
+        }
+
+        return {
+          secret,
+          signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? "15m" },
+        };
+      },
     })
   ],
   controllers: [AuthController],

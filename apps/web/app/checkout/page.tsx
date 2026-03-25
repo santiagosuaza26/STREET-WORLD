@@ -10,13 +10,30 @@ import { usersService, type UserProfile } from "../_lib/api";
 import { useAuth } from "../_lib/auth-context";
 import { formatPrice } from "../_lib/price";
 
+type ShippingForm = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  country: string;
+};
+
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal } = useCart();
   const { user, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [billingProfile, setBillingProfile] = useState<UserProfile | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
+  const [shipping, setShipping] = useState<ShippingForm>({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    addressLine: "",
+    city: "",
+    country: "CO",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +54,14 @@ export default function CheckoutPage() {
         if (me.email) {
           setEmail((current) => current || me.email);
         }
+        setShipping((current) => ({
+          firstName: current.firstName || me.firstName || "",
+          lastName: current.lastName || me.lastName || "",
+          phone: current.phone || me.phone || "",
+          addressLine: current.addressLine || me.addressLine || "",
+          city: current.city || me.city || "",
+          country: current.country || me.country || "CO",
+        }));
       } catch {
         setBillingError("No se pudieron cargar tus datos de facturacion.");
       } finally {
@@ -73,7 +98,15 @@ export default function CheckoutPage() {
   const fullName = `${billingProfile?.firstName ?? ""} ${billingProfile?.lastName ?? ""}`.trim();
   const countryName = getCountryNameByCode(billingProfile?.country);
 
-  const isDisabled = items.length === 0 || !effectiveEmail || isLoading;
+  const shippingIsValid =
+    shipping.firstName.trim().length >= 2 &&
+    shipping.lastName.trim().length >= 2 &&
+    shipping.phone.trim().length >= 7 &&
+    shipping.addressLine.trim().length >= 8 &&
+    shipping.city.trim().length >= 2 &&
+    shipping.country.trim().length >= 2;
+
+  const isDisabled = items.length === 0 || !effectiveEmail || !shippingIsValid || isLoading;
 
   const handleCheckout = async () => {
     setError(null);
@@ -102,7 +135,15 @@ export default function CheckoutPage() {
               name: item.name,
               price: item.price,
               quantity: item.quantity
-            }))
+            })),
+            shipping: {
+              firstName: shipping.firstName.trim(),
+              lastName: shipping.lastName.trim(),
+              phone: shipping.phone.trim(),
+              addressLine: shipping.addressLine.trim(),
+              city: shipping.city.trim(),
+              country: shipping.country.trim().toUpperCase(),
+            }
           })
         }
       );
@@ -112,7 +153,6 @@ export default function CheckoutPage() {
       }
 
       const data = await response.json();
-      clearCart();
       window.location.href = data.checkoutUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
@@ -148,6 +188,75 @@ export default function CheckoutPage() {
               required
             />
             {error ? <p className="form-error">{error}</p> : null}
+          </div>
+
+          <div className="card">
+            <h3>Datos de envio</h3>
+            <p className="muted">
+              Puedes comprar sin crear cuenta, solo necesitamos estos datos para despacho.
+            </p>
+            <div className="billing-grid">
+              <InputField
+                id="shipping-first-name"
+                label="Nombre"
+                value={shipping.firstName}
+                onChange={(event) =>
+                  setShipping((current) => ({ ...current, firstName: event.target.value }))
+                }
+                placeholder="Nombre"
+                required
+              />
+              <InputField
+                id="shipping-last-name"
+                label="Apellido"
+                value={shipping.lastName}
+                onChange={(event) =>
+                  setShipping((current) => ({ ...current, lastName: event.target.value }))
+                }
+                placeholder="Apellido"
+                required
+              />
+              <InputField
+                id="shipping-phone"
+                label="Telefono"
+                value={shipping.phone}
+                onChange={(event) =>
+                  setShipping((current) => ({ ...current, phone: event.target.value }))
+                }
+                placeholder="3001234567"
+                required
+              />
+              <InputField
+                id="shipping-city"
+                label="Ciudad"
+                value={shipping.city}
+                onChange={(event) =>
+                  setShipping((current) => ({ ...current, city: event.target.value }))
+                }
+                placeholder="Bogota"
+                required
+              />
+            </div>
+            <InputField
+              id="shipping-address"
+              label="Direccion"
+              value={shipping.addressLine}
+              onChange={(event) =>
+                setShipping((current) => ({ ...current, addressLine: event.target.value }))
+              }
+              placeholder="Calle 123 # 45-67"
+              required
+            />
+            <InputField
+              id="shipping-country"
+              label="Pais"
+              value={shipping.country}
+              onChange={(event) =>
+                setShipping((current) => ({ ...current, country: event.target.value }))
+              }
+              placeholder="CO"
+              required
+            />
           </div>
 
           <div className="card billing-summary">
@@ -207,7 +316,7 @@ export default function CheckoutPage() {
           ) : (
             <ul className="checkout-items">
               {items.map((item) => (
-                <li key={item.slug}>
+                <li key={`${item.slug}-${item.size}-${item.color ?? ""}`}>
                   <span>{item.name}</span>
                   <span>{item.quantity}x</span>
                 </li>
@@ -221,6 +330,11 @@ export default function CheckoutPage() {
           <Button onClick={handleCheckout} disabled={isDisabled} variant="primary">
             {isLoading ? "Procesando..." : "Ir a pago"}
           </Button>
+          {!shippingIsValid ? (
+            <p className="muted small">
+              Completa los datos de envio para continuar.
+            </p>
+          ) : null}
           <p className="muted small">
             Al continuar aceptas nuestros terminos y politicas de pago.
           </p>

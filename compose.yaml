@@ -33,10 +33,25 @@ services:
       dockerfile: Dockerfile.api
     environment:
       NODE_ENV: production
-      TYPEORM_SYNCHRONIZE: "true"
+      TYPEORM_SYNCHRONIZE: "false"
       PORT: 3001
       DB_PATH: /data/street_world.db
       JWT_SECRET: replace-me
+      JWT_REFRESH_SECRET: replace-me-refresh
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 30d
+      PAYMENTS_WEBHOOK_SECRET: replace-me
+      PAYMENTS_WEBHOOK_HEADER: x-signature
+      PAYMENTS_WEBHOOK_ALGO: hmac-sha256
+      PAYMENTS_WEBHOOK_ALLOW_INSECURE: "false"
+      PAYMENTS_WEBHOOK_MAX_RETRIES: 5
+      PAYMENTS_WEBHOOK_RETRY_BASE_MS: 2000
+      PAYMENTS_WEBHOOK_RETRY_MAX_MS: 60000
+      PAYMENTS_WEBHOOK_RETRY_BATCH_SIZE: 20
+      PAYMENTS_RECONCILE_CRON: "*/1 * * * *"
+      PAYMENTS_RECONCILE_EVERY_MS: 60000
+      PAYMENTS_PENDING_TIMEOUT_MS: 1800000
+      PAYMENTS_ALERT_FAILED_THRESHOLD: 5
       CORS_ORIGINS: http://localhost:3000
       WEB_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000

@@ -137,9 +137,12 @@ export class AuthService {
   }
 
   private async createTokens(user: User): Promise<TokenPair> {
-    const expiresIn = process.env.JWT_EXPIRES_IN ?? "7d";
+    const expiresIn = process.env.JWT_EXPIRES_IN ?? "15m";
     const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN ?? "30d";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? "dev-secret";
+    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET;
+    if (!refreshSecret) {
+      throw new BadRequestException("Configuracion de autenticacion incompleta");
+    }
     const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload, { expiresIn });
     const refreshToken = await this.jwtService.signAsync(payload, {
@@ -155,7 +158,10 @@ export class AuthService {
   }
 
   private async verifyRefreshToken(token: string): Promise<{ sub: string; email: string }> {
-    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? "dev-secret";
+    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET;
+    if (!refreshSecret) {
+      throw new UnauthorizedException("Configuracion de autenticacion incompleta");
+    }
     try {
       return await this.jwtService.verifyAsync(token, { secret: refreshSecret });
     } catch {

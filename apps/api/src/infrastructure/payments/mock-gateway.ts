@@ -2,7 +2,8 @@ import { Injectable } from "@nestjs/common";
 import {
   CheckoutInput,
   CheckoutSession,
-  PaymentGateway
+  PaymentGateway,
+  TransactionStatus
 } from "../../domain/payments/payment-gateway";
 
 @Injectable()
@@ -16,5 +17,10 @@ export class MockGateway implements PaymentGateway {
       checkoutUrl,
       reference: input.reference
     };
+  }
+
+  async getTransactionStatus(_reference: string): Promise<TransactionStatus> {
+    // Mock provider keeps status predictable for local development.
+    return "paid";
   }
 }

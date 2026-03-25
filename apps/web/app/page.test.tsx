@@ -20,8 +20,13 @@ jest.mock('./_state/CartContext', () => ({
 }));
 
 describe('HomePage Integration', () => {
-  it('renders Sale section with onSale products', () => {
-    render(<HomePage />);
+  const renderHomePage = async () => {
+    const page = await HomePage();
+    return render(page);
+  };
+
+  it('renders Sale section with onSale products', async () => {
+    await renderHomePage();
 
     const saleHeading = screen.getByRole('heading', { name: /🔥 SALE/i });
     expect(saleHeading).toBeInTheDocument();
@@ -33,8 +38,8 @@ describe('HomePage Integration', () => {
     }
   });
 
-  it('renders New Arrivals section with isNewArrival products', () => {
-    render(<HomePage />);
+  it('renders New Arrivals section with isNewArrival products', async () => {
+    await renderHomePage();
 
     const newHeading = screen.getByRole('heading', { name: /🆕 Novedades/i });
     expect(newHeading).toBeInTheDocument();
@@ -48,8 +53,8 @@ describe('HomePage Integration', () => {
     }
   });
 
-  it('renders Best Sellers section with isBestSeller products', () => {
-    render(<HomePage />);
+  it('renders Best Sellers section with isBestSeller products', async () => {
+    await renderHomePage();
 
     const bestSellerHeading = screen.getByRole('heading', { name: /⭐ Best Sellers/i });
     expect(bestSellerHeading).toBeInTheDocument();
@@ -61,15 +66,15 @@ describe('HomePage Integration', () => {
     }
   });
 
-  it('renders hero section with main call to action', () => {
-    render(<HomePage />);
+  it('renders hero section with main call to action', async () => {
+    await renderHomePage();
 
     expect(screen.getByText(/La calle no espera/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Explorar catalogo/i })).toBeInTheDocument();
   });
 
-  it('renders all three product sections in correct order', () => {
-    const { container } = render(<HomePage />);
+  it('renders all three product sections in correct order', async () => {
+    const { container } = await renderHomePage();
 
     // Get all section headings
     const sections = container.querySelectorAll('.section-title h2');

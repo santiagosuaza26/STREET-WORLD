@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Headers,
   Post,
   Req,
@@ -13,6 +14,7 @@ import { CheckoutRequest } from "../../application/payments/checkout-request";
 import { CheckoutResult } from "../../application/payments/checkout-result";
 import { PaymentService } from "../../application/payments/payment.service";
 import { normalizeWebhookPayload } from "../../application/payments/webhook-normalizer";
+import { PaymentMetricsService } from "../../application/payments/payment-metrics.service";
 import { WebhookValidator } from "../../application/payments/webhook-validator";
 import { CheckoutDto } from "./dtos";
 
@@ -20,8 +22,14 @@ import { CheckoutDto } from "./dtos";
 export class PaymentsController {
   constructor(
     private readonly paymentService: PaymentService,
+    private readonly metrics: PaymentMetricsService,
     private readonly webhookValidator: WebhookValidator
   ) {}
+
+  @Get("metrics")
+  getMetrics() {
+    return this.metrics.getSnapshot();
+  }
 
   @Post("checkout")
   async createCheckout(

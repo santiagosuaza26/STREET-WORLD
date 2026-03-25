@@ -5,12 +5,14 @@ import { ProductsService } from "../../application/products/products.service";
 import { PRODUCT_REPOSITORY } from "../../domain/products/product-repository";
 import { ProductEntity } from "../../infrastructure/database/entities/product.entity";
 import { TypeOrmProductRepository } from "../../infrastructure/repositories/typeorm-product.repository";
+import { ProductCatalogSeedService } from "../../application/products/product-catalog-seed.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([ProductEntity])],
   controllers: [ProductsController],
   providers: [
     ProductsService,
+    ProductCatalogSeedService,
     {
       provide: PRODUCT_REPOSITORY,
       useClass: TypeOrmProductRepository

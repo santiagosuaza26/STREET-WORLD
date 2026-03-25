@@ -80,6 +80,10 @@ export class InMemoryProductRepository implements ProductRepository {
     return PRODUCTS.find((product) => product.id === id) ?? null;
   }
 
+  async findBySlug(slug: string): Promise<Product | null> {
+    return PRODUCTS.find((product) => product.slug === slug) ?? null;
+  }
+
   async findByCategory(category: string): Promise<Product[]> {
     return PRODUCTS.filter((product) => product.category === category);
   }

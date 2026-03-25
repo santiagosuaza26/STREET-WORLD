@@ -25,6 +25,38 @@ export class CheckoutItemDto {
   quantity: number;
 }
 
+export class CheckoutShippingDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(80)
+  firstName: string;
+
+  @IsString()
+  @MinLength(2)
+  @MaxLength(80)
+  lastName: string;
+
+  @IsString()
+  @MinLength(7)
+  @MaxLength(30)
+  phone: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(180)
+  addressLine: string;
+
+  @IsString()
+  @MinLength(2)
+  @MaxLength(120)
+  city: string;
+
+  @IsString()
+  @MinLength(2)
+  @MaxLength(120)
+  country: string;
+}
+
 export class CheckoutDto {
   @IsIn(["COP"])
   currency: "COP";
@@ -37,6 +69,10 @@ export class CheckoutDto {
   @IsString()
   @MaxLength(120)
   userId?: string;
+
+  @ValidateNested()
+  @Type(() => CheckoutShippingDto)
+  shipping: CheckoutShippingDto;
 
   @IsArray()
   @ValidateNested({ each: true })

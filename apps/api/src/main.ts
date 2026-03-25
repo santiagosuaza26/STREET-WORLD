@@ -1,3 +1,4 @@
+import "./tracing";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { json } from "express";
@@ -5,6 +6,7 @@ import type { NextFunction, Request, Response } from "express";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./api/filters/http-exception.filter";
 import { AppDataSource } from "./database.config";
+import { RedisStoreService } from "./infrastructure/cache/redis-store.service";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -17,12 +19,13 @@ function getAllowedOrigins(): string[] {
     .filter((origin) => origin.length > 0);
 }
 
-type RateBucket = {
-  count: number;
-  resetAt: number;
-};
-
-const rateBuckets = new Map<string, RateBucket>();
+function assertRequiredEnv(name: string) {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`Missing required env var: ${name}`);
+  }
+  return value;
+}
 
 function parseNumberEnv(value: string | undefined, fallback: number) {
   const parsed = Number(value);
@@ -51,12 +54,17 @@ function isSensitivePath(path: string) {
 }
 
 async function bootstrap() {
+  assertRequiredEnv("JWT_SECRET");
+  assertRequiredEnv("JWT_REFRESH_SECRET");
+  const bootstrapLogger = new Logger("Bootstrap");
+
   // Initialize database
   if (!AppDataSource.isInitialized) {
     await AppDataSource.initialize();
-    console.log("✅ Database initialized successfully");
+    bootstrapLogger.log("Database initialized successfully");
   }
   const app = await NestFactory.create(AppModule);
+  const redisStore = app.get(RedisStoreService);
   const logger = new Logger("HTTP");
   app.use(
     json({
@@ -85,39 +93,40 @@ async function bootstrap() {
     })
   );
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    applySecurityHeaders(res);
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      applySecurityHeaders(res);
 
-    if (isSensitivePath(req.path)) {
-      const windowMs = parseNumberEnv(process.env.RATE_LIMIT_WINDOW_MS, 60_000);
-      const maxRequests = parseNumberEnv(process.env.RATE_LIMIT_MAX, 30);
-      const ip = req.ip || req.socket.remoteAddress || "unknown";
-      const key = `${ip}:${req.path}`;
-      const now = Date.now();
-      const current = rateBuckets.get(key);
+      if (isSensitivePath(req.path)) {
+        const windowMs = parseNumberEnv(process.env.RATE_LIMIT_WINDOW_MS, 60_000);
+        const maxRequests = parseNumberEnv(process.env.RATE_LIMIT_MAX, 30);
+        const ip = req.ip || req.socket.remoteAddress || "unknown";
+        const key = `rate-limit:${ip}:${req.path}`;
+        const rate = await redisStore.consumeRateLimit(key, maxRequests, windowMs);
 
-      if (!current || now >= current.resetAt) {
-        rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
-      } else if (current.count >= maxRequests) {
-        res.status(429).json({
-          statusCode: 429,
-          error: "TOO_MANY_REQUESTS",
-          message: "Demasiadas solicitudes. Intenta nuevamente en unos minutos.",
-          path: req.originalUrl,
-          timestamp: new Date().toISOString()
-        });
-        return;
-      } else {
-        current.count += 1;
+        if (!rate.allowed) {
+          const retryAfterSeconds = Math.max(1, Math.ceil(rate.retryAfterMs / 1000));
+          res.setHeader("Retry-After", String(retryAfterSeconds));
+          res.status(429).json({
+            statusCode: 429,
+            error: "TOO_MANY_REQUESTS",
+            message: "Demasiadas solicitudes. Intenta nuevamente en unos minutos.",
+            path: req.originalUrl,
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
       }
-    }
 
-    const start = Date.now();
-    res.on("finish", () => {
-      const duration = Date.now() - start;
-      logger.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
-    });
-    next();
+      const start = Date.now();
+      res.on("finish", () => {
+        const duration = Date.now() - start;
+        logger.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+      });
+      next();
+    } catch (error) {
+      next(error as Error);
+    }
   });
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port);
